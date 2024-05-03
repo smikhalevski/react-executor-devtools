@@ -1,0 +1,31 @@
+{
+  "name": "React Executor Devtools",
+  "description": "Devtools for React Executor.",
+  "version": "0.0.1",
+  "manifest_version": 3,
+  "devtools_page": "devtools.html",
+  "content_scripts": [
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_start",
+      "world": "ISOLATED"
+    },
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "content_main.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    }
+  ]
+}
