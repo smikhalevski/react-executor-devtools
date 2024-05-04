@@ -11,9 +11,9 @@ export interface RPC {
 const MESSAGE_SOURCE = 'react_executor_devtools';
 
 const enum MessageType {
-  REQUEST,
-  VOID_REQUEST,
-  RESPONSE,
+  REQUEST = 'REQUEST',
+  VOID_REQUEST = 'VOID_REQUEST',
+  RESPONSE = 'RESPONSE',
 }
 
 function noop() {}
@@ -32,7 +32,7 @@ function isRPCMessage(message: unknown): message is RPCMessage {
   return Array.isArray(message) && message[0] === MESSAGE_SOURCE;
 }
 
-export function startRPCRelay(): void {
+export function relayRPC(): void {
   const clientResolvers = new Map<number, (message: RPCMessage) => void>();
   const serverResolvers = new Map<number, (message: RPCMessage) => void>();
 
@@ -43,16 +43,22 @@ export function startRPCRelay(): void {
 
     const [, type, requestId] = event.data;
 
-    if (type === MessageType.REQUEST) {
-      clientResolvers.set(requestId, message => {
-        clientResolvers.delete(requestId);
-        window.postMessage(message);
-      });
-      chrome.runtime.sendMessage(event.data);
-    }
+    switch (type) {
+      case MessageType.REQUEST:
+        clientResolvers.set(requestId, message => {
+          clientResolvers.delete(requestId);
+          window.postMessage(message);
+        });
+        chrome.runtime.sendMessage(event.data);
+        break;
 
-    if (type === MessageType.RESPONSE) {
-      serverResolvers.get(requestId)?.(event.data);
+      case MessageType.VOID_REQUEST:
+        chrome.runtime.sendMessage(event.data);
+        break;
+
+      case MessageType.RESPONSE:
+        serverResolvers.get(requestId)?.(event.data);
+        break;
     }
   });
 
@@ -60,18 +66,25 @@ export function startRPCRelay(): void {
     if (sender.id !== chrome.runtime.id || !isRPCMessage(message)) {
       return;
     }
+
     const [, type, requestId] = message;
 
-    if (type === MessageType.REQUEST) {
-      serverResolvers.set(requestId, message => {
-        serverResolvers.delete(requestId);
-        sendResponseMessage(message);
-      });
-      window.postMessage(message);
-    }
+    switch (type) {
+      case MessageType.REQUEST:
+        serverResolvers.set(requestId, message => {
+          serverResolvers.delete(requestId);
+          sendResponseMessage(message);
+        });
+        window.postMessage(message);
+        return true;
 
-    if (type === MessageType.RESPONSE) {
-      clientResolvers.get(requestId)?.(message);
+      case MessageType.VOID_REQUEST:
+        window.postMessage(message);
+        break;
+
+      case MessageType.RESPONSE:
+        clientResolvers.get(requestId)?.(message);
+        break;
     }
   });
 }
@@ -91,7 +104,7 @@ export function createClientRPC(): RPC {
     const [, type, requestId, data] = event.data;
 
     if (type === MessageType.RESPONSE) {
-      responseResolvers.get(type)?.(serializer.parse(data));
+      responseResolvers.get(requestId)?.(serializer.parse(data));
       return;
     }
 

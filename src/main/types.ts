@@ -19,31 +19,35 @@ export interface DevtoolsExecutorEvent {
   payload: unknown;
 }
 
-export type DevtoolsEvent = ExecutorCreatedEvent | ExecutorStateChangedEvent | EventInterceptedEvent;
+export type DevtoolsEvent =
+  | { type: 'get_executors' }
+  | GetExecutorsResponseEvent
+  | ExecutorCreatedEvent
+  | ExecutorStateChangedEvent
+  | EventInterceptedEvent;
+
+export interface GetExecutorsResponseEvent {
+  type: 'get_executors_response';
+  executors: DevtoolsExecutor[];
+}
 
 export interface ExecutorCreatedEvent {
   type: 'executor_created';
-  payload: {
-    executorIndex: number;
-    executorKey: unknown;
-  };
+  executorIndex: number;
+  executorKey: unknown;
 }
 
 export interface ExecutorStateChangedEvent {
   type: 'executor_state_changed';
-  payload: {
-    executorIndex: number;
-    executorState: DevtoolsExecutorState;
-  };
+  executorIndex: number;
+  executorState: DevtoolsExecutorState;
 }
 
 export interface EventInterceptedEvent {
   type: 'event_intercepted';
-  payload: {
-    executorIndex: number;
-    event: {
-      type: string;
-      payload: unknown;
-    };
+  executorIndex: number;
+  event: {
+    type: string;
+    payload: unknown;
   };
 }

@@ -1,5 +1,6 @@
 import type { Executor, ExecutorPlugin } from 'react-executor';
-import { publish } from './content_messaging';
+import { createClientRPC } from './rpc';
+import type { DevtoolsEvent } from './types';
 
 declare global {
   interface Window {
@@ -11,9 +12,32 @@ interface Devtools {
   plugin: ExecutorPlugin;
 }
 
+const rpc = createClientRPC();
+
 let executorCount = 0;
 
 const executors = new Map<number, Executor>();
+
+rpc.addRequestHandler<DevtoolsEvent, DevtoolsEvent>((request, sendResponse) => {
+  if (request.type === 'get_executors') {
+    sendResponse({
+      type: 'get_executors_response',
+      executors: Array.from(executors).map(([executorIndex, executor]) => ({
+        key: executor.key,
+        index: executorIndex,
+        events: [],
+        state: {
+          isFulfilled: executor.isFulfilled,
+          isRejected: executor.isRejected,
+          isInvalidated: executor.isInvalidated,
+          value: executor.value,
+          reason: executor.reason,
+          timestamp: executor.timestamp,
+        },
+      })),
+    });
+  }
+});
 
 const plugin: ExecutorPlugin = executor => {
   const executorIndex = executorCount++;
@@ -22,13 +46,15 @@ const plugin: ExecutorPlugin = executor => {
 
   let executorVersion = -1;
 
-  publish('executor_created', {
+  rpc.sendVoidRequest<DevtoolsEvent>({
+    type: 'executor_created',
     executorIndex,
     executorKey: executor.key,
   });
 
   executor.subscribe(event => {
-    publish('event_intercepted', {
+    rpc.sendVoidRequest<DevtoolsEvent>({
+      type: 'event_intercepted',
       executorIndex,
       event: {
         type: event.type,
@@ -40,7 +66,8 @@ const plugin: ExecutorPlugin = executor => {
       return;
     }
 
-    publish('executor_state_changed', {
+    rpc.sendVoidRequest<DevtoolsEvent>({
+      type: 'executor_state_changed',
       executorIndex,
       executorState: {
         isFulfilled: executor.isFulfilled,
