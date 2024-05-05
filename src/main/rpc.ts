@@ -1,205 +1,182 @@
-export type RequestHandler<Request, Response> = (request: Request, sendResponse: (response: Response) => void) => void;
-
-export interface RPC {
-  sendRequest<Request, Response>(request: Request): Promise<Response>;
-
-  sendVoidRequest<Request>(request: Request): void;
-
-  addRequestHandler<Request, Response>(handler: RequestHandler<Request, Response>): () => void;
+export interface RPCServer<Tag extends string, Methods extends { [method: string]: (...params: any[]) => any }> {
+  readonly tag: Tag;
+  readonly methods: Methods;
 }
 
-const MESSAGE_SOURCE = 'react_executor_devtools';
+export type RPCClient<Methods> = {
+  [K in keyof Methods]: Methods[K] extends (...params: infer Params) => infer Result
+    ? undefined | void extends Result
+      ? { put(...params: Params): void }
+      : { get(...params: Params): Promise<Awaited<Result>> }
+    : never;
+};
 
-const enum MessageType {
-  REQUEST = 'REQUEST',
-  VOID_REQUEST = 'VOID_REQUEST',
-  RESPONSE = 'RESPONSE',
+export interface RPCRequest {
+  tag: string;
+  id?: number;
+  method: string;
+  params: any[];
 }
 
-function noop() {}
-
-interface Serializer {
-  stringify(value: unknown): string;
-
-  parse(serializedValue: string): any;
+export interface RPCResponse {
+  tag: string;
+  id: number;
+  result: any;
 }
 
-const serializer: Serializer = JSON;
-
-type RPCMessage = [source: string, type: MessageType, requestId: number, data: string];
-
-function isRPCMessage(message: unknown): message is RPCMessage {
-  return Array.isArray(message) && message[0] === MESSAGE_SOURCE;
+export function isRPCRequest(message: unknown): message is RPCRequest {
+  return message !== null && typeof message === 'object' && 'method' in message;
 }
 
-export function relayRPC(): void {
-  const clientResolvers = new Map<number, (message: RPCMessage) => void>();
-  const serverResolvers = new Map<number, (message: RPCMessage) => void>();
+export function isRPCResponse(message: unknown): message is RPCResponse {
+  return message !== null && typeof message === 'object' && 'id' in message && !('method' in message);
+}
 
-  window.addEventListener('message', event => {
-    if (event.source !== window || !isRPCMessage(event.data)) {
-      return;
-    }
+export interface RPCDispatcher {
+  put(request: RPCRequest): void;
 
-    const [, type, requestId] = event.data;
+  get(request: RPCRequest): Promise<RPCResponse>;
+}
 
-    switch (type) {
-      case MessageType.REQUEST:
-        clientResolvers.set(requestId, message => {
-          clientResolvers.delete(requestId);
-          window.postMessage(message);
+export function createRPCClient<Server extends RPCServer<any, any>>(
+  tag: Server['tag'],
+  dispatcher: RPCDispatcher
+): RPCClient<Server['methods']> {
+  return new Proxy<any>(
+    {},
+    {
+      get(client, method) {
+        if (typeof method !== 'string') {
+          return undefined;
+        }
+
+        return (client[method] ||= {
+          put(...params: any[]) {
+            dispatcher.put({ tag, method, params });
+          },
+
+          get(...params: any[]) {
+            return dispatcher.get({ tag, id: 0, method, params }).then(response => response.result);
+          },
         });
-        chrome.runtime.sendMessage(event.data);
-        break;
-
-      case MessageType.VOID_REQUEST:
-        chrome.runtime.sendMessage(event.data);
-        break;
-
-      case MessageType.RESPONSE:
-        serverResolvers.get(requestId)?.(event.data);
-        break;
+      },
     }
-  });
-
-  chrome.runtime.onMessage.addListener((message, sender, sendResponseMessage) => {
-    if (sender.id !== chrome.runtime.id || !isRPCMessage(message)) {
-      return;
-    }
-
-    const [, type, requestId] = message;
-
-    switch (type) {
-      case MessageType.REQUEST:
-        serverResolvers.set(requestId, message => {
-          serverResolvers.delete(requestId);
-          sendResponseMessage(message);
-        });
-        window.postMessage(message);
-        return true;
-
-      case MessageType.VOID_REQUEST:
-        window.postMessage(message);
-        break;
-
-      case MessageType.RESPONSE:
-        clientResolvers.get(requestId)?.(message);
-        break;
-    }
-  });
+  );
 }
 
-export function createClientRPC(): RPC {
-  let requestCount = 0;
-
-  const responseResolvers = new Map<number, (response: unknown) => void>();
-
-  const requestHandlers: RequestHandler<any, any>[] = [];
-
+export function createWindowRPCServer<
+  Tag extends string,
+  Methods extends { [method: string]: (...params: any[]) => any },
+>(tag: Tag, methods: Methods): RPCServer<Tag, Methods> {
   window.addEventListener('message', event => {
-    if (event.source !== window || !isRPCMessage(event.data)) {
-      return;
-    }
+    const request = event.data;
 
-    const [, type, requestId, data] = event.data;
+    if (isRPCRequest(request) && request.tag === tag) {
+      const result = methods[request.method](...request.params);
 
-    if (type === MessageType.RESPONSE) {
-      responseResolvers.get(requestId)?.(serializer.parse(data));
-      return;
-    }
-
-    let isResponseSent = false;
-
-    const sendResponse =
-      type === MessageType.VOID_REQUEST
-        ? noop
-        : (response: unknown) => {
-            if (isResponseSent) {
-              throw new Error('Response already sent');
-            }
-            isResponseSent = true;
-            window.postMessage([MESSAGE_SOURCE, MessageType.RESPONSE, requestId, serializer.stringify(response)], '*');
-          };
-
-    const request = serializer.parse(data);
-
-    for (const requestHandler of requestHandlers) {
-      try {
-        requestHandler(request, sendResponse);
-      } catch (error) {
-        // Trigger unhandled exception
-        setTimeout(() => {
-          throw error;
-        }, 0);
+      if (request.id !== undefined) {
+        Promise.resolve(result).then(result => {
+          window.postMessage({ tag, id: request.id, result }, '*');
+        });
       }
     }
   });
 
-  return {
-    sendRequest(request) {
-      return new Promise<any>(resolve => {
-        const requestId = requestCount++;
-
-        responseResolvers.set(requestId, response => {
-          responseResolvers.delete(requestId);
-          resolve(response);
-        });
-        window.postMessage([MESSAGE_SOURCE, MessageType.REQUEST, requestId, serializer.stringify(request)], '*');
-      });
-    },
-
-    sendVoidRequest(request) {
-      window.postMessage([MESSAGE_SOURCE, MessageType.VOID_REQUEST, 0, serializer.stringify(request)], '*');
-    },
-
-    addRequestHandler(handler) {
-      requestHandlers.push(handler);
-
-      return () => {
-        requestHandlers.splice(requestHandlers.indexOf(handler), 1);
-      };
-    },
-  };
+  return { tag, methods };
 }
 
-export function createServerRPC(): RPC {
-  let requestCount = 0;
-
-  return {
-    sendRequest(request) {
-      const message: RPCMessage = [MESSAGE_SOURCE, MessageType.REQUEST, requestCount++, serializer.stringify(request)];
-
-      return chrome.tabs
-        .sendMessage<RPCMessage, RPCMessage>(chrome.devtools.inspectedWindow.tabId, message)
-        .then(message => serializer.parse(message[3]));
+export function createWindowRPCClient<Server extends RPCServer<any, any>>(
+  tag: Server['tag']
+): RPCClient<Server['methods']> {
+  return createRPCClient(tag, {
+    put(request) {
+      window.postMessage(request, '*');
     },
 
-    sendVoidRequest(request) {
-      const message: RPCMessage = [MESSAGE_SOURCE, MessageType.REQUEST, requestCount++, serializer.stringify(request)];
+    get(request) {
+      return new Promise(resolve => {
+        const messageListener = (event: MessageEvent) => {
+          const response = event.data;
 
-      chrome.tabs.sendMessage<RPCMessage>(chrome.devtools.inspectedWindow.tabId, message);
+          if (isRPCResponse(response) && response.tag === tag && response.id === request.id) {
+            window.removeEventListener('message', messageListener);
+            resolve(response);
+          }
+        };
+        window.addEventListener('message', messageListener);
+        window.postMessage(request, '*');
+      });
     },
+  });
+}
 
-    addRequestHandler(handler) {
-      const messageListener = (
-        message: unknown,
-        sender: chrome.runtime.MessageSender,
-        sendResponseMessage: (message?: unknown) => void
-      ) => {
-        if (sender.id !== chrome.runtime.id || !isRPCMessage(message)) {
-          return;
-        }
+export function createChromeRPCServer<
+  Tag extends string,
+  Methods extends { [method: string]: (...params: any[]) => any },
+>(tag: Tag, methods: Methods): RPCServer<Tag, Methods> {
+  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (sender.id === chrome.runtime.id && isRPCRequest(request) && request.tag === tag) {
+      const result = methods[request.method](...request.params);
 
-        handler(serializer.parse(message[3]), response => {
-          sendResponseMessage([MESSAGE_SOURCE, MessageType.RESPONSE, message[2], serializer.stringify(response)]);
+      if (request.id !== undefined) {
+        Promise.resolve(result).then(result => {
+          sendResponse({ tag, id: request.id, result });
         });
-      };
+        return true;
+      }
+    }
+  });
 
-      chrome.runtime.onMessage.addListener(messageListener);
+  return { tag, methods };
+}
 
-      return () => {
-        chrome.runtime.onMessage.removeListener(messageListener);
-      };
+export function createChromeRPCClient<Server extends RPCServer<any, any>>(
+  tag: Server['tag']
+): RPCClient<Server['methods']> {
+  return createRPCClient(tag, {
+    put(request) {
+      chrome.tabs.sendMessage(chrome.devtools.inspectedWindow.tabId, request);
     },
-  };
+
+    get(request) {
+      return chrome.tabs.sendMessage(chrome.devtools.inspectedWindow.tabId, request);
+    },
+  });
+}
+
+export function relayRPC(): void {
+  window.addEventListener('message', event => {
+    const request = event.data;
+
+    if (isRPCRequest(request)) {
+      chrome.runtime.sendMessage(request).then(response => {
+        if (response !== undefined) {
+          window.postMessage(response, '*');
+        }
+      });
+    }
+  });
+
+  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (sender.id !== chrome.runtime.id || !isRPCRequest(request)) {
+      return;
+    }
+
+    if (request.id === undefined) {
+      window.postMessage(request, '*');
+    }
+
+    const messageListener = (event: MessageEvent) => {
+      const response = event.data;
+
+      if (isRPCResponse(response) && response.id === request.id) {
+        window.removeEventListener('message', messageListener);
+        sendResponse(response);
+      }
+    };
+
+    window.addEventListener('message', messageListener);
+    window.postMessage(request, '*');
+    return true;
+  });
 }

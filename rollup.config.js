@@ -15,9 +15,10 @@ module.exports = ['content.ts', 'content_main.ts', 'devtools.ts', 'panel.tsx'].m
     typescript({ tsconfig: './tsconfig.build.json' }),
     replace({
       values: {
-        'process.env.NODE_ENV': JSON.stringify('production'),
+        'process.env.NODE_ENV': JSON.stringify('development'),
       },
       preventAssignment: true,
     }),
   ],
+  preserveSymlinks: true,
 }));
