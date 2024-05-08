@@ -50,7 +50,7 @@ export interface InspectOptions {
  * @param options Additional options.
  * @returns The tree of {@link Inspection} objects.
  */
-export function inspect(value: unknown, depth = 1, options: InspectOptions = {}): Inspection {
+export function inspect(value: unknown, depth = 0, options: InspectOptions = {}): Inspection {
   if (
     value === null ||
     typeof value !== 'object' ||
@@ -62,7 +62,7 @@ export function inspect(value: unknown, depth = 1, options: InspectOptions = {})
   ) {
     return {
       key: undefined,
-      value: preview(value, 0, options),
+      value: previewValue(value, 0, options),
     };
   }
 
@@ -80,7 +80,7 @@ export function inspect(value: unknown, depth = 1, options: InspectOptions = {})
         }
         children ||= [];
         child = inspect(item, depth - 1, options);
-        child.key = preview(children.length, 0, options);
+        child.key = previewKey(children.length);
         children.push(child);
       }
     } catch {
@@ -97,18 +97,22 @@ export function inspect(value: unknown, depth = 1, options: InspectOptions = {})
       }
       children ||= [];
       child = inspect(value[key as keyof object], depth - 1, options);
-      child.key = preview(key, 0, options);
+      child.key = previewKey(key);
       children.push(child);
     }
   }
 
   return {
     key: undefined,
-    value: preview(value, 2, options),
+    value: previewValue(value, 2, options),
     [SOURCE_OBJECT]: value,
     hasChildren,
     children,
   };
+}
+
+export function previewKey(key: PropertyKey): string {
+  return key.toString();
 }
 
 /**
@@ -138,7 +142,7 @@ export function inspect(value: unknown, depth = 1, options: InspectOptions = {})
  * - If 2 then children are inspected and included in preview.
  * @param options Additional options.
  */
-export function preview(value: unknown, detail: number = 2, options: InspectOptions = {}): string {
+export function previewValue(value: unknown, detail: number = 2, options: InspectOptions = {}): string {
   const { maxProperties = 5, maxStringLength = 200 } = options;
 
   let str = '';
@@ -194,7 +198,7 @@ export function preview(value: unknown, detail: number = 2, options: InspectOpti
         str += '…';
         break;
       }
-      str += preview(value[index++], 0, options);
+      str += previewValue(value[index++], 0, options);
     }
 
     return (label !== undefined ? label + ' ' : '') + '[' + str + ']';
@@ -219,7 +223,7 @@ export function preview(value: unknown, detail: number = 2, options: InspectOpti
         str += '…';
         break;
       }
-      str += preview(item, 0, options);
+      str += previewValue(item, 0, options);
     }
 
     return label + ' {' + str + '}';
@@ -240,7 +244,7 @@ export function preview(value: unknown, detail: number = 2, options: InspectOpti
         str += '…';
         break;
       }
-      str += preview(entry[0], detail - 1, options) + ' => ' + preview(entry[1], detail - 1, options);
+      str += previewValue(entry[0], 0, options) + ' => ' + previewValue(entry[1], 0, options);
     }
 
     return label + ' {' + str + '}';
@@ -263,7 +267,7 @@ export function preview(value: unknown, detail: number = 2, options: InspectOpti
           str += '…';
           break;
         }
-        str += preview(item, 0, options);
+        str += previewValue(item, 0, options);
       }
     } catch {
       // noop
@@ -283,7 +287,7 @@ export function preview(value: unknown, detail: number = 2, options: InspectOpti
         str += '…';
         break;
       }
-      str += key.toString() + ': ' + preview(value[key as keyof object], 0, options);
+      str += key.toString() + ': ' + previewValue(value[key as keyof object], 0, options);
     }
   }
 

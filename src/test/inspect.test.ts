@@ -1,82 +1,82 @@
-import { inspect, preview, SOURCE_OBJECT } from '../main/inspect';
+import { inspect, previewValue, SOURCE_OBJECT } from '../main/inspect';
 
-describe('preview', () => {
+describe('previewValue', () => {
   test('null', () => {
-    expect(preview(null)).toBe('null');
+    expect(previewValue(null)).toBe('null');
   });
 
   test('undefined', () => {
-    expect(preview(undefined)).toBe('undefined');
+    expect(previewValue(undefined)).toBe('undefined');
   });
 
   test('number', () => {
-    expect(preview(111)).toBe('111');
-    expect(preview(new Number(111))).toBe('111');
-    expect(preview(NaN)).toBe('NaN');
-    expect(preview(Infinity)).toBe('Infinity');
+    expect(previewValue(111)).toBe('111');
+    expect(previewValue(new Number(111))).toBe('111');
+    expect(previewValue(NaN)).toBe('NaN');
+    expect(previewValue(Infinity)).toBe('Infinity');
   });
 
   test('boolean', () => {
-    expect(preview(true)).toBe('true');
-    expect(preview(new Boolean(true))).toBe('true');
+    expect(previewValue(true)).toBe('true');
+    expect(previewValue(new Boolean(true))).toBe('true');
   });
 
   test('symbol', () => {
-    expect(preview(Symbol('aaa'))).toBe('Symbol(aaa)');
-    expect(preview(Object(Symbol('aaa')))).toBe('Symbol(aaa)');
+    expect(previewValue(Symbol('aaa'))).toBe('Symbol(aaa)');
+    expect(previewValue(Object(Symbol('aaa')))).toBe('Symbol(aaa)');
   });
 
   test('bigint', () => {
-    expect(preview(BigInt(111))).toBe('111n');
-    expect(preview(Object(BigInt(111)))).toBe('111n');
+    expect(previewValue(BigInt(111))).toBe('111n');
+    expect(previewValue(Object(BigInt(111)))).toBe('111n');
   });
 
   test('string', () => {
-    expect(preview('aaa')).toBe('"aaa"');
+    expect(previewValue('aaa')).toBe('"aaa"');
 
-    expect(preview('aaa bbb', 0, { maxStringLength: 5 })).toBe('"aaa…"');
-    expect(preview('aaa bbb ccc', 0, { maxStringLength: 9 })).toBe('"aaa bbb…"');
-    expect(preview('aaabbb bbb', 0, { maxStringLength: 5 })).toBe('"aaab…"');
-    expect(preview('  aaa bbb', 0, { maxStringLength: 5 })).toBe('"  aa…"');
-    expect(preview('aaa\tbbb', 0, { maxStringLength: 5 })).toBe('"aaa\\…"');
-    expect(preview('\t\n')).toBe('"\\t\\n"');
+    expect(previewValue('aaa bbb', 0, { maxStringLength: 5 })).toBe('"aaa…"');
+    expect(previewValue('aaa bbb ccc', 0, { maxStringLength: 9 })).toBe('"aaa bbb…"');
+    expect(previewValue('aaabbb bbb', 0, { maxStringLength: 5 })).toBe('"aaab…"');
+    expect(previewValue('  aaa bbb', 0, { maxStringLength: 5 })).toBe('"  aa…"');
+    expect(previewValue('aaa\tbbb', 0, { maxStringLength: 5 })).toBe('"aaa\\…"');
+    expect(previewValue('\t\n')).toBe('"\\t\\n"');
   });
 
   test('function', () => {
-    expect(preview(() => 111, 0)).toBe('ƒ');
-    expect(preview(() => 111, 1)).toBe('ƒ');
-    expect(preview(() => 111, 2)).toBe('ƒ ()');
+    expect(previewValue(() => 111, 0)).toBe('ƒ');
+    expect(previewValue(() => 111, 1)).toBe('ƒ');
+    expect(previewValue(() => 111, 2)).toBe('ƒ ()');
 
-    expect(preview(function aaa() {}, 0)).toBe('ƒ');
-    expect(preview(function aaa() {}, 1)).toBe('ƒ');
-    expect(preview(function aaa() {}, 2)).toBe('ƒ aaa()');
+    expect(previewValue(function aaa() {}, 0)).toBe('ƒ');
+    expect(previewValue(function aaa() {}, 1)).toBe('ƒ');
+    expect(previewValue(function aaa() {}, 2)).toBe('ƒ aaa()');
   });
 
   describe('array', () => {
     test('Array', () => {
-      expect(preview([], 0)).toBe('[]');
-      expect(preview([{ aaa: { bbb: 222 } }, 111], 0)).toBe('Array(2)');
+      expect(previewValue([], 0)).toBe('[]');
+      expect(previewValue([{ aaa: { bbb: 222 } }, 111], 0)).toBe('Array(2)');
 
-      expect(preview([], 1)).toBe('[]');
-      expect(preview([{ aaa: { bbb: 222 } }, 111], 1)).toBe('[{…}, 111]');
+      expect(previewValue([], 1)).toBe('[]');
+      expect(previewValue([{ aaa: { bbb: 222 } }, 111], 1)).toBe('[{…}, 111]');
 
-      expect(preview([], 2)).toBe('[]');
-      expect(preview([{ aaa: { bbb: 222 } }, 111], 2)).toBe('[{…}, 111]');
+      expect(previewValue([], 2)).toBe('[]');
+      expect(previewValue([{ aaa: { bbb: 222 } }, 111], 2)).toBe('[{…}, 111]');
 
-      expect(preview([111, 222, 333, 444], 2, { maxProperties: 3 })).toBe('[111, 222, 333, …]');
+      expect(previewValue([111, 222, 333, 444], 2, { maxProperties: 3 })).toBe('[111, 222, 333, …]');
     });
 
     test('Uint8Array', () => {
-      expect(preview(new Uint8Array(), 0)).toBe('Uint8Array(0)');
-      expect(preview(new Uint8Array([111, 222]), 0)).toBe('Uint8Array(2)');
+      expect(previewValue(new Uint8Array(), 0)).toBe('Uint8Array(0)');
+      expect(previewValue(new Uint8Array([111, 222]), 0)).toBe('Uint8Array(2)');
 
-      expect(preview(new Uint8Array(), 1)).toBe('Uint8Array(0)');
-      expect(preview(new Uint8Array([111, 222]), 1)).toBe('Uint8Array(2) [111, 222]');
+      expect(previewValue(new Uint8Array(), 1)).toBe('Uint8Array(0)');
+      expect(previewValue(new Uint8Array([111, 222]), 1)).toBe('Uint8Array(2) [111, 222]');
 
-      expect(preview(new Uint8Array(), 2)).toBe('Uint8Array(0)');
-      expect(preview(new Uint8Array([111, 222]), 2)).toBe('Uint8Array(2) [111, 222]');
+      expect(previewValue(new Uint8Array(), 2)).toBe('Uint8Array(0)');
+      expect(previewValue(new Uint8Array([111, 222]), 2)).toBe('Uint8Array(2) [111, 222]');
 
-      expect(preview(new Uint8Array([1, 2, 3, 4]), 2, { maxProperties: 3 })).toBe('Uint8Array(4) [1, 2, 3, …]');
+      expect(previewValue(new Uint8Array([1, 2, 3, 4]), 2, { maxProperties: 3 })).toBe('Uint8Array(4) [1, 2, 3, …]');
     });
 
     test('extended Array', () => {
@@ -87,37 +87,37 @@ describe('preview', () => {
 
       xxx1.push({ aaa: { bbb: 222 } }, 111);
 
-      expect(preview(xxx0, 0)).toBe('Xxx(0)');
-      expect(preview(xxx1, 0)).toBe('Xxx(2)');
+      expect(previewValue(xxx0, 0)).toBe('Xxx(0)');
+      expect(previewValue(xxx1, 0)).toBe('Xxx(2)');
 
-      expect(preview(xxx0, 1)).toBe('Xxx(0)');
-      expect(preview(xxx1, 1)).toBe('Xxx(2) [{…}, 111]');
+      expect(previewValue(xxx0, 1)).toBe('Xxx(0)');
+      expect(previewValue(xxx1, 1)).toBe('Xxx(2) [{…}, 111]');
 
-      expect(preview(xxx0, 2)).toBe('Xxx(0)');
-      expect(preview(xxx1, 2)).toBe('Xxx(2) [{…}, 111]');
+      expect(previewValue(xxx0, 2)).toBe('Xxx(0)');
+      expect(previewValue(xxx1, 2)).toBe('Xxx(2) [{…}, 111]');
     });
   });
 
   test('ArrayBuffer', () => {
-    expect(preview(new ArrayBuffer(128), 0)).toBe('ArrayBuffer(128)');
-    expect(preview(new ArrayBuffer(128), 1)).toBe('ArrayBuffer(128)');
-    expect(preview(new ArrayBuffer(128), 2)).toBe('ArrayBuffer(128)');
+    expect(previewValue(new ArrayBuffer(128), 0)).toBe('ArrayBuffer(128)');
+    expect(previewValue(new ArrayBuffer(128), 1)).toBe('ArrayBuffer(128)');
+    expect(previewValue(new ArrayBuffer(128), 2)).toBe('ArrayBuffer(128)');
   });
 
   test('Set', () => {
-    expect(preview(new Set(), 0)).toBe('Set(0)');
-    expect(preview(new Set([{ aaa: 111 }]), 0)).toBe('Set(1)');
-    expect(preview(new Set([{ aaa: 111 }]), 1)).toBe('Set(1) {{…}}');
-    expect(preview(new Set([{ aaa: 111 }]), 2)).toBe('Set(1) {{…}}');
-    expect(preview(new Set(['aaa', 111, 222, 333]), 2, { maxProperties: 3 })).toBe('Set(4) {"aaa", 111, 222, …}');
+    expect(previewValue(new Set(), 0)).toBe('Set(0)');
+    expect(previewValue(new Set([{ aaa: 111 }]), 0)).toBe('Set(1)');
+    expect(previewValue(new Set([{ aaa: 111 }]), 1)).toBe('Set(1) {{…}}');
+    expect(previewValue(new Set([{ aaa: 111 }]), 2)).toBe('Set(1) {{…}}');
+    expect(previewValue(new Set(['aaa', 111, 222, 333]), 2, { maxProperties: 3 })).toBe('Set(4) {"aaa", 111, 222, …}');
   });
 
   describe('Map', () => {
     test('default', () => {
-      expect(preview(new Map(), 0)).toBe('Map(0)');
-      expect(preview(new Map([[{ aaa: 111 }, 'bbb']]), 0)).toBe('Map(1)');
-      expect(preview(new Map([[{ aaa: 111 }, 'bbb']]), 1)).toBe('Map(1) {{…} => "bbb"}');
-      expect(preview(new Map([[{ aaa: 111 }, 'bbb']]), 2)).toBe('Map(1) {{aaa: 111} => "bbb"}');
+      expect(previewValue(new Map(), 0)).toBe('Map(0)');
+      expect(previewValue(new Map([[{ aaa: 111 }, 'bbb']]), 0)).toBe('Map(1)');
+      expect(previewValue(new Map([[{ aaa: 111 }, 'bbb']]), 1)).toBe('Map(1) {{…} => "bbb"}');
+      expect(previewValue(new Map([[{ aaa: 111 }, 'bbb']]), 2)).toBe('Map(1) {{aaa: 111} => "bbb"}');
     });
 
     test('extended Map', () => {
@@ -127,10 +127,10 @@ describe('preview', () => {
         }
       }
 
-      expect(preview(new Xxx(), 0)).toBe('Xxx(0)');
-      expect(preview(new Xxx([[{ aaa: 111 }, 'bbb']]), 0)).toBe('Xxx(1)');
-      expect(preview(new Xxx([[{ aaa: 111 }, 'bbb']]), 1)).toBe('Xxx(1) {{…} => "bbb"}');
-      expect(preview(new Xxx([[{ aaa: 111 }, 'bbb']]), 2)).toBe('Xxx(1) {{aaa: 111} => "bbb"}');
+      expect(previewValue(new Xxx(), 0)).toBe('Xxx(0)');
+      expect(previewValue(new Xxx([[{ aaa: 111 }, 'bbb']]), 0)).toBe('Xxx(1)');
+      expect(previewValue(new Xxx([[{ aaa: 111 }, 'bbb']]), 1)).toBe('Xxx(1) {{…} => "bbb"}');
+      expect(previewValue(new Xxx([[{ aaa: 111 }, 'bbb']]), 2)).toBe('Xxx(1) {{aaa: 111} => "bbb"}');
     });
   });
 
@@ -138,27 +138,27 @@ describe('preview', () => {
     test('plain', () => {
       const xxx = { aaa: 111, bbb: { ccc: 222 } };
 
-      expect(preview(xxx, 0)).toBe('{…}');
-      expect(preview(xxx, 1)).toBe('{aaa: 111, bbb: {…}}');
-      expect(preview(xxx, 2)).toBe('{aaa: 111, bbb: {…}}');
-      expect(preview(xxx, 2, { maxProperties: 1 })).toBe('{aaa: 111, …}');
+      expect(previewValue(xxx, 0)).toBe('{…}');
+      expect(previewValue(xxx, 1)).toBe('{aaa: 111, bbb: {…}}');
+      expect(previewValue(xxx, 2)).toBe('{aaa: 111, bbb: {…}}');
+      expect(previewValue(xxx, 2, { maxProperties: 1 })).toBe('{aaa: 111, …}');
 
-      expect(preview({}, 0)).toBe('{}');
-      expect(preview({}, 1)).toBe('{}');
-      expect(preview({}, 2)).toBe('{}');
+      expect(previewValue({}, 0)).toBe('{}');
+      expect(previewValue({}, 1)).toBe('{}');
+      expect(previewValue({}, 2)).toBe('{}');
     });
 
     test('null prototype', () => {
       const xxx = Object.assign(Object.create(null), { aaa: 111, bbb: { ccc: 222 } });
 
-      expect(preview(xxx, 0)).toBe('{…}');
-      expect(preview(xxx, 1)).toBe('{aaa: 111, bbb: {…}}');
-      expect(preview(xxx, 2)).toBe('{aaa: 111, bbb: {…}}');
-      expect(preview(xxx, 2, { maxProperties: 1 })).toBe('{aaa: 111, …}');
+      expect(previewValue(xxx, 0)).toBe('{…}');
+      expect(previewValue(xxx, 1)).toBe('{aaa: 111, bbb: {…}}');
+      expect(previewValue(xxx, 2)).toBe('{aaa: 111, bbb: {…}}');
+      expect(previewValue(xxx, 2, { maxProperties: 1 })).toBe('{aaa: 111, …}');
 
-      expect(preview({}, 0)).toBe('{}');
-      expect(preview({}, 1)).toBe('{}');
-      expect(preview({}, 2)).toBe('{}');
+      expect(previewValue({}, 0)).toBe('{}');
+      expect(previewValue({}, 1)).toBe('{}');
+      expect(previewValue({}, 2)).toBe('{}');
     });
 
     test('plain iterable', () => {
@@ -170,12 +170,12 @@ describe('preview', () => {
         },
       };
 
-      expect(preview(xxx, 0)).toBe('{…}');
-      expect(preview(xxx, 1)).toBe('{111, 222, 333, Symbol(Symbol.iterator): ƒ}');
-      expect(preview(xxx, 2)).toBe('{111, 222, 333, Symbol(Symbol.iterator): ƒ}');
-      expect(preview(xxx, 2, { maxProperties: 2 })).toBe('{111, 222, …}');
+      expect(previewValue(xxx, 0)).toBe('{…}');
+      expect(previewValue(xxx, 1)).toBe('{111, 222, 333, Symbol(Symbol.iterator): ƒ}');
+      expect(previewValue(xxx, 2)).toBe('{111, 222, 333, Symbol(Symbol.iterator): ƒ}');
+      expect(previewValue(xxx, 2, { maxProperties: 2 })).toBe('{111, 222, …}');
 
-      expect(preview({ *[Symbol.iterator]() {} }, 0)).toBe('{…}');
+      expect(previewValue({ *[Symbol.iterator]() {} }, 0)).toBe('{…}');
     });
 
     test('plain iterable with properties and symbols', () => {
@@ -189,10 +189,10 @@ describe('preview', () => {
         [ddd]: 444,
       };
 
-      expect(preview(xxx, 0)).toBe('{…}');
-      expect(preview(xxx, 1)).toBe('{111, 222, aaa: 333, Symbol(Symbol.iterator): ƒ, Symbol(ddd): 444}');
-      expect(preview(xxx, 2)).toBe('{111, 222, aaa: 333, Symbol(Symbol.iterator): ƒ, Symbol(ddd): 444}');
-      expect(preview(xxx, 2, { maxProperties: 2 })).toBe('{111, 222, …}');
+      expect(previewValue(xxx, 0)).toBe('{…}');
+      expect(previewValue(xxx, 1)).toBe('{111, 222, aaa: 333, Symbol(Symbol.iterator): ƒ, Symbol(ddd): 444}');
+      expect(previewValue(xxx, 2)).toBe('{111, 222, aaa: 333, Symbol(Symbol.iterator): ƒ, Symbol(ddd): 444}');
+      expect(previewValue(xxx, 2, { maxProperties: 2 })).toBe('{111, 222, …}');
     });
 
     test('class instance', () => {
@@ -203,14 +203,14 @@ describe('preview', () => {
 
       class Yyy {}
 
-      expect(preview(new Xxx(), 0)).toBe('Xxx');
-      expect(preview(new Xxx(), 1)).toBe('Xxx {aaa: 111, bbb: {…}}');
-      expect(preview(new Xxx(), 2)).toBe('Xxx {aaa: 111, bbb: {…}}');
-      expect(preview(new Xxx(), 2, { maxProperties: 1 })).toBe('Xxx {aaa: 111, …}');
+      expect(previewValue(new Xxx(), 0)).toBe('Xxx');
+      expect(previewValue(new Xxx(), 1)).toBe('Xxx {aaa: 111, bbb: {…}}');
+      expect(previewValue(new Xxx(), 2)).toBe('Xxx {aaa: 111, bbb: {…}}');
+      expect(previewValue(new Xxx(), 2, { maxProperties: 1 })).toBe('Xxx {aaa: 111, …}');
 
-      expect(preview(new Yyy(), 0)).toBe('Yyy');
-      expect(preview(new Yyy(), 1)).toBe('Yyy');
-      expect(preview(new Yyy(), 2)).toBe('Yyy');
+      expect(previewValue(new Yyy(), 0)).toBe('Yyy');
+      expect(previewValue(new Yyy(), 1)).toBe('Yyy');
+      expect(previewValue(new Yyy(), 2)).toBe('Yyy');
     });
 
     test('anonymous class instance', () => {
@@ -219,9 +219,9 @@ describe('preview', () => {
           aaa = 111;
         })())();
 
-      expect(preview(xxx, 0)).toBe('{…}');
-      expect(preview(xxx, 1)).toBe('{aaa: 111}');
-      expect(preview(xxx, 2)).toBe('{aaa: 111}');
+      expect(previewValue(xxx, 0)).toBe('{…}');
+      expect(previewValue(xxx, 1)).toBe('{aaa: 111}');
+      expect(previewValue(xxx, 2)).toBe('{aaa: 111}');
     });
 
     test('iterable class instance', () => {
@@ -248,16 +248,16 @@ describe('preview', () => {
         *[Symbol.iterator]() {}
       }
 
-      expect(preview(new Xxx(), 0)).toBe('Xxx');
-      expect(preview(new Xxx(), 1)).toBe('Xxx {111, 222, 333, aaa: 111, bbb: {…}}');
-      expect(preview(new Xxx(), 2)).toBe('Xxx {111, 222, 333, aaa: 111, bbb: {…}}');
-      expect(preview(new Xxx(), 2, { maxProperties: 1 })).toBe('Xxx {111, …}');
+      expect(previewValue(new Xxx(), 0)).toBe('Xxx');
+      expect(previewValue(new Xxx(), 1)).toBe('Xxx {111, 222, 333, aaa: 111, bbb: {…}}');
+      expect(previewValue(new Xxx(), 2)).toBe('Xxx {111, 222, 333, aaa: 111, bbb: {…}}');
+      expect(previewValue(new Xxx(), 2, { maxProperties: 1 })).toBe('Xxx {111, …}');
 
-      expect(preview(new Yyy(), 0)).toBe('Yyy');
-      expect(preview(new Yyy(), 2)).toBe('Yyy {111, 222, 333}');
+      expect(previewValue(new Yyy(), 0)).toBe('Yyy');
+      expect(previewValue(new Yyy(), 2)).toBe('Yyy {111, 222, 333}');
 
-      expect(preview(new Zzz(), 0)).toBe('Zzz');
-      expect(preview(new Zzz(), 2)).toBe('Zzz');
+      expect(previewValue(new Zzz(), 0)).toBe('Zzz');
+      expect(previewValue(new Zzz(), 2)).toBe('Zzz');
     });
   });
 });

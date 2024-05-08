@@ -1,0 +1,20 @@
+module.exports = {
+  typescript: true,
+  outDir: './src/main/gen/icons',
+  jsxRuntime: 'automatic',
+  index: false,
+  svgProps: {
+    role: 'image',
+  },
+  template(vars, { tpl }) {
+    return tpl` import React from 'react';
+${vars.imports};
+
+${vars.interfaces};
+
+export const ${vars.componentName.substring(3)} = (${vars.props}) => (
+  ${vars.jsx}
+);
+`;
+  },
+};
