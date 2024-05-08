@@ -1,0 +1,35 @@
+.InspectionView {
+    display: flex;
+    margin-inline-start: calc(var(--indent, 0) * 1em);
+}
+
+.ExpandCollapseToggle {
+    flex: 0 0 1em;
+    width: 1em;
+    padding: 0;
+    color: var(--color-expand-collapse-toggle);
+}
+
+.ExpandCollapseToggleSpacer {
+    padding-inline-start: 1em;
+}
+
+.KeyPreview {
+    color: var(--color-attribute-name-not-editable);
+    flex: 0 0 auto;
+    cursor: default;
+}
+
+.AfterKeyPreview {
+    color: var(--color-text);
+    margin-right: 0.5em;
+}
+
+.ValuePreview {
+    color: var(--color-attribute-value);
+    white-space: pre;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: default;
+    flex: 1;
+}

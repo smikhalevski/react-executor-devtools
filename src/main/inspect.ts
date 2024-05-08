@@ -12,12 +12,12 @@ export interface Inspection {
   /**
    * The preview of the inspected key.
    */
-  key?: string;
+  keyPreview?: string;
 
   /**
    * The preview of the inspected value.
    */
-  value: string;
+  valuePreview: string;
 
   /**
    * `true` if the inspected object has children.
@@ -61,8 +61,8 @@ export function inspect(value: unknown, depth = 0, options: InspectOptions = {})
     value instanceof BigInt
   ) {
     return {
-      key: undefined,
-      value: previewValue(value, 0, options),
+      keyPreview: undefined,
+      valuePreview: previewValue(value, 0, options),
     };
   }
 
@@ -80,7 +80,7 @@ export function inspect(value: unknown, depth = 0, options: InspectOptions = {})
         }
         children ||= [];
         child = inspect(item, depth - 1, options);
-        child.key = previewKey(children.length);
+        child.keyPreview = previewKey(children.length);
         children.push(child);
       }
     } catch {
@@ -97,14 +97,14 @@ export function inspect(value: unknown, depth = 0, options: InspectOptions = {})
       }
       children ||= [];
       child = inspect(value[key as keyof object], depth - 1, options);
-      child.key = previewKey(key);
+      child.keyPreview = previewKey(key);
       children.push(child);
     }
   }
 
   return {
-    key: undefined,
-    value: previewValue(value, 2, options),
+    keyPreview: undefined,
+    valuePreview: previewValue(value, 2, options),
     [SOURCE_OBJECT]: value,
     hasChildren,
     children,

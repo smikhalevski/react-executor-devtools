@@ -1,18 +1,17 @@
 import { createContext, useContext } from 'react';
 import type { ExecutorManager } from 'react-executor';
 import { inspect, SOURCE_OBJECT } from '../inspect';
-import { getOrCreatePreviewsExecutor } from './App';
-import type { Qualifier } from './InspectionView';
+import { getOrCreateExecutorLineItemListExecutor } from './App';
 
 export function createAPI(executorManager: ExecutorManager) {
   return {
-    async getKeyInspectionAt(qualifier: Qualifier, path: number[]) {
+    async getInspectionAt(type: 'key' | 'value' | 'reason', executorIndex: number, path: number[]) {
       // RPC latency
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 200));
 
-      const previewsExecutor = getOrCreatePreviewsExecutor(executorManager);
+      const previewsExecutor = getOrCreateExecutorLineItemListExecutor(executorManager);
 
-      const executor = previewsExecutor.get().find(preview => preview.executorIndex === qualifier.executorIndex);
+      const executor = previewsExecutor.get().find(preview => preview.executorIndex === executorIndex);
 
       let inspection = executor!.keyInspection;
 

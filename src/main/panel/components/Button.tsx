@@ -1,5 +1,5 @@
 import React, { type ReactNode } from 'react';
-import css from './inspection-view.module.css';
+import css from './Button.module.css';
 
 export interface ButtonProps {
   children?: ReactNode;

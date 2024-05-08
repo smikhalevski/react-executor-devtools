@@ -1,49 +1,71 @@
 import React from 'react';
 import { type Executor, type ExecutorManager, useExecutorManager, useExecutorSubscription } from 'react-executor';
 import type { Inspection } from '../inspect';
-import { InspectionView } from './InspectionView';
+import { useAPI } from './APIContext';
+import { Layout } from './components/Layout';
+import { InspectionView } from './components/InspectionView';
+import './normalize.module.css';
+import './root.module.css';
 
-export interface Preview {
+export interface ExecutorLineItem {
   executorIndex: number;
   keyInspection: Inspection;
 }
 
-export function getOrCreatePreviewsExecutor(manager: ExecutorManager): Executor<Preview[]> {
-  return manager.getOrCreate('previews');
+export function getOrCreateExecutorLineItemListExecutor(manager: ExecutorManager): Executor<ExecutorLineItem[]> {
+  return manager.getOrCreate('executor-line-item-list');
 }
 
 export const App = () => {
-  return <PreviewsView />;
+  return (
+    <Layout
+      executorsChildren={<ExecutorLineItemListView />}
+      inspectedExecutorChildren={
+        <div>
+          <div>Key</div>
+          <div>Status</div>
+          <div>Value</div>
+          <div>Reason</div>
+          <div>Plugins</div>
+          <div>Annotations</div>
+        </div>
+      }
+    />
+  );
 };
 
-export const PreviewsView = () => {
-  const previewsExecutor = getOrCreatePreviewsExecutor(useExecutorManager());
+const ExecutorLineItemListView = () => {
+  const executorLineItemListExecutor = getOrCreateExecutorLineItemListExecutor(useExecutorManager());
 
-  useExecutorSubscription(previewsExecutor);
+  useExecutorSubscription(executorLineItemListExecutor);
 
-  if (!previewsExecutor.isFulfilled) {
+  if (!executorLineItemListExecutor.isFulfilled) {
     return 'Loading';
   }
 
-  return previewsExecutor.get().map((preview, index) => (
-    <PreviewView
-      preview={preview}
+  return executorLineItemListExecutor.get().map((preview, index) => (
+    <ExecutorLineItemView
+      executorLineItem={preview}
       key={index}
     />
   ));
 };
 
-export interface PreviewViewProps {
-  preview: Preview;
+interface ExecutorLineItemViewProps {
+  executorLineItem: ExecutorLineItem;
 }
 
-export const PreviewView = ({ preview }: PreviewViewProps) => {
+const ExecutorLineItemView = ({ executorLineItem }: ExecutorLineItemViewProps) => {
+  const api = useAPI();
+
   return (
     <div>
       <InspectionView
-        inspection={preview.keyInspection}
-        qualifier={{ type: 'key', executorIndex: preview.executorIndex }}
+        inspection={executorLineItem.keyInspection}
         path={[]}
+        onInspectionRequested={path => {
+          api.getInspectionAt('key', executorLineItem.executorIndex, path);
+        }}
       />
     </div>
   );

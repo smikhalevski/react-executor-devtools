@@ -3,9 +3,9 @@ import ReactDOM from 'react-dom/client';
 import { ExecutorManager, ExecutorManagerProvider } from 'react-executor';
 import { inspect } from '../inspect';
 import { APIProvider, createAPI } from './APIContext';
-import { App, getOrCreatePreviewsExecutor } from './App';
+import { App, getOrCreateExecutorLineItemListExecutor } from './App';
 
-const root = ReactDOM.createRoot(document.body.appendChild(document.createElement('div')));
+const root = ReactDOM.createRoot(document.getElementById('container')!);
 
 const executorManager = new ExecutorManager({
   plugins: [
@@ -19,7 +19,7 @@ const executorManager = new ExecutorManager({
 
 const api = createAPI(executorManager);
 
-const previewsExecutor = getOrCreatePreviewsExecutor(executorManager);
+const previewsExecutor = getOrCreateExecutorLineItemListExecutor(executorManager);
 
 const qqq = new Map().set('aaa', 111).set('bbb', 222).set('ccc', { ddd: 333 }).set('eee', 444);
 

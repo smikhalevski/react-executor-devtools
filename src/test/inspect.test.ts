@@ -117,7 +117,7 @@ describe('previewValue', () => {
       expect(previewValue(new Map(), 0)).toBe('Map(0)');
       expect(previewValue(new Map([[{ aaa: 111 }, 'bbb']]), 0)).toBe('Map(1)');
       expect(previewValue(new Map([[{ aaa: 111 }, 'bbb']]), 1)).toBe('Map(1) {{…} => "bbb"}');
-      expect(previewValue(new Map([[{ aaa: 111 }, 'bbb']]), 2)).toBe('Map(1) {{aaa: 111} => "bbb"}');
+      expect(previewValue(new Map([[{ aaa: 111 }, 'bbb']]), 2)).toBe('Map(1) {{…} => "bbb"}');
     });
 
     test('extended Map', () => {
@@ -130,7 +130,7 @@ describe('previewValue', () => {
       expect(previewValue(new Xxx(), 0)).toBe('Xxx(0)');
       expect(previewValue(new Xxx([[{ aaa: 111 }, 'bbb']]), 0)).toBe('Xxx(1)');
       expect(previewValue(new Xxx([[{ aaa: 111 }, 'bbb']]), 1)).toBe('Xxx(1) {{…} => "bbb"}');
-      expect(previewValue(new Xxx([[{ aaa: 111 }, 'bbb']]), 2)).toBe('Xxx(1) {{aaa: 111} => "bbb"}');
+      expect(previewValue(new Xxx([[{ aaa: 111 }, 'bbb']]), 2)).toBe('Xxx(1) {{…} => "bbb"}');
     });
   });
 
@@ -264,13 +264,13 @@ describe('previewValue', () => {
 
 describe('inspect', () => {
   test('primitive value', () => {
-    expect(inspect('aaa', 0)).toEqual({ value: '"aaa"' });
-    expect(inspect(111, 0)).toEqual({ value: '111' });
-    expect(inspect(NaN, 0)).toEqual({ value: 'NaN' });
-    expect(inspect(Infinity, 0)).toEqual({ value: 'Infinity' });
-    expect(inspect(true, 0)).toEqual({ value: 'true' });
-    expect(inspect(Symbol('aaa'), 0)).toEqual({ value: 'Symbol(aaa)' });
-    expect(inspect(BigInt(111), 0)).toEqual({ value: '111n' });
+    expect(inspect('aaa', 0)).toEqual({ valuePreview: '"aaa"' });
+    expect(inspect(111, 0)).toEqual({ valuePreview: '111' });
+    expect(inspect(NaN, 0)).toEqual({ valuePreview: 'NaN' });
+    expect(inspect(Infinity, 0)).toEqual({ valuePreview: 'Infinity' });
+    expect(inspect(true, 0)).toEqual({ valuePreview: 'true' });
+    expect(inspect(Symbol('aaa'), 0)).toEqual({ valuePreview: 'Symbol(aaa)' });
+    expect(inspect(BigInt(111), 0)).toEqual({ valuePreview: '111n' });
   });
 
   describe('array', () => {
@@ -279,9 +279,9 @@ describe('inspect', () => {
       const arr2: unknown = [111];
       const arr3: unknown = [111, 222];
 
-      expect(inspect(arr1, 0)).toEqual({ [SOURCE_OBJECT]: arr1, value: '[]', hasChildren: true });
-      expect(inspect(arr2, 0)).toEqual({ [SOURCE_OBJECT]: arr2, value: '[111]', hasChildren: true });
-      expect(inspect(arr3, 0)).toEqual({ [SOURCE_OBJECT]: arr3, value: '[111, 222]', hasChildren: true });
+      expect(inspect(arr1, 0)).toEqual({ [SOURCE_OBJECT]: arr1, valuePreview: '[]', hasChildren: true });
+      expect(inspect(arr2, 0)).toEqual({ [SOURCE_OBJECT]: arr2, valuePreview: '[111]', hasChildren: true });
+      expect(inspect(arr3, 0)).toEqual({ [SOURCE_OBJECT]: arr3, valuePreview: '[111, 222]', hasChildren: true });
     });
 
     test('depth 1', () => {
@@ -295,66 +295,66 @@ describe('inspect', () => {
 
       expect(inspect(arr1, 1)).toEqual({
         [SOURCE_OBJECT]: arr1,
-        value: '[]',
+        valuePreview: '[]',
         hasChildren: true,
         children: [
           {
-            key: '"length"',
-            value: '0',
+            keyPreview: 'length',
+            valuePreview: '0',
           },
         ],
       });
 
       expect(inspect(arr2, 1)).toEqual({
         [SOURCE_OBJECT]: arr2,
-        value: '[111]',
+        valuePreview: '[111]',
         hasChildren: true,
         children: [
           {
-            key: '"0"',
-            value: '111',
+            keyPreview: '0',
+            valuePreview: '111',
           },
           {
-            key: '"length"',
-            value: '1',
+            keyPreview: 'length',
+            valuePreview: '1',
           },
         ],
       });
 
       expect(inspect(arr3, 1)).toEqual({
         [SOURCE_OBJECT]: arr3,
-        value: '[111, 222]',
+        valuePreview: '[111, 222]',
         hasChildren: true,
         children: [
           {
-            key: '"0"',
-            value: '111',
+            keyPreview: '0',
+            valuePreview: '111',
           },
           {
-            key: '"1"',
-            value: '222',
+            keyPreview: '1',
+            valuePreview: '222',
           },
           {
-            key: '"length"',
-            value: '2',
+            keyPreview: 'length',
+            valuePreview: '2',
           },
         ],
       });
 
       expect(inspect(arr4, 1)).toEqual({
         [SOURCE_OBJECT]: arr4,
-        value: '[{…}]',
+        valuePreview: '[{…}]',
         hasChildren: true,
         children: [
           {
             [SOURCE_OBJECT]: obj1,
-            key: '"0"',
-            value: '{aaa: 111, bbb: {…}}',
+            keyPreview: '0',
+            valuePreview: '{aaa: 111, bbb: {…}}',
             hasChildren: true,
           },
           {
-            key: '"length"',
-            value: '1',
+            keyPreview: 'length',
+            valuePreview: '1',
           },
         ],
       });
@@ -371,78 +371,78 @@ describe('inspect', () => {
 
       expect(inspect(arr1, 2)).toEqual({
         [SOURCE_OBJECT]: arr1,
-        value: '[]',
+        valuePreview: '[]',
         hasChildren: true,
         children: [
           {
-            key: '"length"',
-            value: '0',
+            keyPreview: 'length',
+            valuePreview: '0',
           },
         ],
       });
 
       expect(inspect(arr2, 2)).toEqual({
         [SOURCE_OBJECT]: arr2,
-        value: '[111]',
+        valuePreview: '[111]',
         hasChildren: true,
         children: [
           {
-            key: '"0"',
-            value: '111',
+            keyPreview: '0',
+            valuePreview: '111',
           },
           {
-            key: '"length"',
-            value: '1',
+            keyPreview: 'length',
+            valuePreview: '1',
           },
         ],
       });
 
       expect(inspect(arr3, 2)).toEqual({
         [SOURCE_OBJECT]: arr3,
-        value: '[111, 222]',
+        valuePreview: '[111, 222]',
         hasChildren: true,
         children: [
           {
-            key: '"0"',
-            value: '111',
+            keyPreview: '0',
+            valuePreview: '111',
           },
           {
-            key: '"1"',
-            value: '222',
+            keyPreview: '1',
+            valuePreview: '222',
           },
           {
-            key: '"length"',
-            value: '2',
+            keyPreview: 'length',
+            valuePreview: '2',
           },
         ],
       });
 
       expect(inspect(arr4, 2)).toEqual({
         [SOURCE_OBJECT]: arr4,
-        value: '[{…}]',
+        valuePreview: '[{…}]',
         hasChildren: true,
         children: [
           {
             [SOURCE_OBJECT]: obj1,
-            key: '"0"',
-            value: '{aaa: 111, bbb: {…}}',
+            keyPreview: '0',
+            valuePreview: '{aaa: 111, bbb: {…}}',
             hasChildren: true,
             children: [
               {
-                key: '"aaa"',
-                value: '111',
+                keyPreview: 'aaa',
+                valuePreview: '111',
               },
               {
                 [SOURCE_OBJECT]: obj2,
                 hasChildren: true,
-                key: '"bbb"',
-                value: '{ccc: 222}',
+                keyPreview: 'bbb',
+                valuePreview: '{ccc: 222}',
               },
             ],
           },
           {
-            key: '"length"',
-            value: '1',
+            keyPreview: 'length',
+            valuePreview: '1',
           },
         ],
       });
@@ -455,7 +455,7 @@ describe('inspect', () => {
 
       expect(inspect(map, 0)).toEqual({
         [SOURCE_OBJECT]: map,
-        value: 'Map(1) {{aaa: 111} => {bbb: 222}}',
+        valuePreview: 'Map(1) {{…} => {…}}',
         hasChildren: true,
       });
     });
@@ -467,14 +467,14 @@ describe('inspect', () => {
 
       expect(inspect(map, 1)).toEqual({
         [SOURCE_OBJECT]: map,
-        value: 'Map(1) {{aaa: 111} => {bbb: 222}}',
+        valuePreview: 'Map(1) {{…} => {…}}',
         hasChildren: true,
         children: [
           {
             [SOURCE_OBJECT]: obj,
             hasChildren: true,
-            key: '0',
-            value: '[{…}, {…}]',
+            keyPreview: '0',
+            valuePreview: '[{…}, {…}]',
           },
         ],
       });
@@ -489,30 +489,30 @@ describe('inspect', () => {
 
       expect(inspect(map, 2)).toEqual({
         [SOURCE_OBJECT]: map,
-        value: 'Map(1) {{aaa: 111} => {bbb: 222}}',
+        valuePreview: 'Map(1) {{…} => {…}}',
         hasChildren: true,
         children: [
           {
             [SOURCE_OBJECT]: obj1,
-            key: '0',
-            value: '[{…}, {…}]',
+            keyPreview: '0',
+            valuePreview: '[{…}, {…}]',
             hasChildren: true,
             children: [
               {
                 [SOURCE_OBJECT]: obj2,
-                key: '"0"',
-                value: '{aaa: 111}',
+                keyPreview: '0',
+                valuePreview: '{aaa: 111}',
                 hasChildren: true,
               },
               {
                 [SOURCE_OBJECT]: obj3,
-                key: '"1"',
-                value: '{bbb: 222}',
+                keyPreview: '1',
+                valuePreview: '{bbb: 222}',
                 hasChildren: true,
               },
               {
-                key: '"length"',
-                value: '2',
+                keyPreview: 'length',
+                valuePreview: '2',
               },
             ],
           },
