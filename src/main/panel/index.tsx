@@ -1,51 +1,62 @@
+import './panel.module.css';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { ExecutorManager, ExecutorManagerProvider } from 'react-executor';
-import { inspect } from '../inspect';
-import { APIProvider, createAPI } from './APIContext';
-import { App, getOrCreateExecutorLineItemListExecutor } from './App';
+import { ExecutorManagerProvider } from 'react-executor';
+import { describeValue } from '../content/inspect';
+import type { SuperficialInfo } from '../content/types';
+import { uuid } from '../content/uuid';
+import { App } from './App';
+import { executorManager, getOrCreateSuperficialInfoExecutor, idsExecutor, inspectedIdExecutor } from './executors';
+import { type ContentClient, ContentClientProvider } from './useContentClient';
 
-const root = ReactDOM.createRoot(document.getElementById('container')!);
-
-const executorManager = new ExecutorManager({
-  plugins: [
-    executor => {
-      executor.subscribe(event => {
-        // console.log(event.target.key, event.type);
-      });
+const superficialInfoMocks: SuperficialInfo[] = [
+  {
+    id: uuid(),
+    keyDescription: describeValue(['user', 1]),
+    origin: window.location.origin,
+    stats: {
+      settledAt: 0,
+      invalidatedAt: 0,
+      isFulfilled: false,
+      isPending: false,
+      isActive: false,
     },
-  ],
-});
-
-const api = createAPI(executorManager);
-
-const previewsExecutor = getOrCreateExecutorLineItemListExecutor(executorManager);
-
-const qqq = new Map().set('aaa', 111).set('bbb', 222).set('ccc', { ddd: 333 }).set('eee', 444);
-
-qqq.set('fff', qqq);
-
-previewsExecutor.resolve([
-  {
-    executorIndex: 0,
-    keyInspection: inspect(qqq, 0, { maxProperties: 3 }),
   },
   {
-    executorIndex: 1,
-    keyInspection: inspect(['user', 222]),
+    id: uuid(),
+    keyDescription: describeValue(['user', 2]),
+    origin: window.location.origin,
+    stats: {
+      settledAt: 0,
+      invalidatedAt: 0,
+      isFulfilled: false,
+      isPending: false,
+      isActive: false,
+    },
   },
-  {
-    executorIndex: 2,
-    keyInspection: inspect(['user', 333]),
-  },
-]);
+];
 
-root.render(
-  // <React.StrictMode>
+const ids = [];
+for (const superficialInfo of superficialInfoMocks) {
+  ids.push(superficialInfo.id);
+  getOrCreateSuperficialInfoExecutor(superficialInfo.id, superficialInfo);
+}
+
+idsExecutor.resolve(ids);
+
+const contentClient: ContentClient = {
+  startInspection(id) {
+    inspectedIdExecutor.resolve(id);
+  },
+  retryExecutor(id) {},
+  invalidateExecutor(id) {},
+  expandInspection(id, part, path) {},
+};
+
+ReactDOM.createRoot(document.getElementById('container')!).render(
   <ExecutorManagerProvider value={executorManager}>
-    <APIProvider value={api}>
+    <ContentClientProvider value={contentClient}>
       <App />
-    </APIProvider>
+    </ContentClientProvider>
   </ExecutorManagerProvider>
-  // </React.StrictMode>
 );

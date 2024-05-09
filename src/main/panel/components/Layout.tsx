@@ -10,8 +10,8 @@ const resizePercentage: { horizontal: string; vertical: string } =
   resizePercentageJson !== null ? JSON.parse(resizePercentageJson) : { horizontal: '50%', vertical: '50%' };
 
 interface LayoutProps {
-  executorsChildren?: ReactNode;
-  inspectedExecutorChildren?: ReactNode;
+  superficialInfoList?: ReactNode;
+  inspectedInfo?: ReactNode;
 }
 
 export const Layout = (props: LayoutProps) => {
@@ -77,14 +77,14 @@ export const Layout = (props: LayoutProps) => {
         '--vertical-resize-percentage': resizePercentage.vertical,
       }}
     >
-      <div className={css.ExecutorsWrapper}>{props.executorsChildren}</div>
+      <div className={css.ExecutorsWrapper}>{props.superficialInfoList}</div>
       <div
         className={css.ResizeBarWrapper}
         onMouseDown={handleStartDrag}
       >
         <div className={css.ResizeBar} />
       </div>
-      <div className={css.InspectedExecutorWrapper}>{props.inspectedExecutorChildren}</div>
+      <div className={css.InspectedExecutorWrapper}>{props.inspectedInfo}</div>
     </div>
   );
 };

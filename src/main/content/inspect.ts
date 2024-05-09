@@ -1,34 +1,4 @@
-export const SOURCE_OBJECT = Symbol();
-
-/**
- * The result of the value inspection.
- */
-export interface Inspection {
-  /**
-   * The value from which this inspection was produced.
-   */
-  [SOURCE_OBJECT]?: object;
-
-  /**
-   * The preview of the inspected key.
-   */
-  keyPreview?: string;
-
-  /**
-   * The preview of the inspected value.
-   */
-  valuePreview: string;
-
-  /**
-   * `true` if the inspected object has children.
-   */
-  hasChildren?: boolean;
-
-  /**
-   * The array of child property inspections, or `undefined` if there are no children, or they weren't inspected.
-   */
-  children?: Inspection[];
-}
+import { INSPECTED_VALUE, type Inspection } from './types';
 
 export interface InspectOptions {
   /**
@@ -41,7 +11,6 @@ export interface InspectOptions {
    */
   maxStringLength?: number;
 }
-
 /**
  * Inspects the given value and values in its properties.
  *
@@ -61,8 +30,9 @@ export function inspect(value: unknown, depth = 0, options: InspectOptions = {})
     value instanceof BigInt
   ) {
     return {
-      keyPreview: undefined,
-      valuePreview: previewValue(value, 0, options),
+      [INSPECTED_VALUE]: value,
+      keyDescription: undefined,
+      valueDescription: describeValue(value, 0, options),
     };
   }
 
@@ -80,7 +50,7 @@ export function inspect(value: unknown, depth = 0, options: InspectOptions = {})
         }
         children ||= [];
         child = inspect(item, depth - 1, options);
-        child.keyPreview = previewKey(children.length);
+        child.keyDescription = inspectKey(children.length);
         children.push(child);
       }
     } catch {
@@ -97,21 +67,21 @@ export function inspect(value: unknown, depth = 0, options: InspectOptions = {})
       }
       children ||= [];
       child = inspect(value[key as keyof object], depth - 1, options);
-      child.keyPreview = previewKey(key);
+      child.keyDescription = inspectKey(key);
       children.push(child);
     }
   }
 
   return {
-    keyPreview: undefined,
-    valuePreview: previewValue(value, 2, options),
-    [SOURCE_OBJECT]: value,
+    [INSPECTED_VALUE]: value,
+    keyDescription: undefined,
+    valueDescription: describeValue(value, 1, options),
     hasChildren,
     children,
   };
 }
 
-export function previewKey(key: PropertyKey): string {
+export function inspectKey(key: PropertyKey): string {
   return key.toString();
 }
 
@@ -136,13 +106,13 @@ export function previewKey(key: PropertyKey): string {
  * Set(3) {"aaa", 111, …}
  *
  * @param value The value to create preview for.
- * @param detail The level of the preview detail.
+ * @param depth The level of the preview detail.
  * - If 0 then the preview doesn't include children.
  * - If 1 then the preview includes children without details.
  * - If 2 then children are inspected and included in preview.
  * @param options Additional options.
  */
-export function previewValue(value: unknown, detail: number = 2, options: InspectOptions = {}): string {
+export function describeValue(value: unknown, depth: number = 2, options: InspectOptions = {}): string {
   const { maxProperties = 5, maxStringLength = 200 } = options;
 
   let str = '';
@@ -173,7 +143,7 @@ export function previewValue(value: unknown, detail: number = 2, options: Inspec
   }
 
   if (typeof value === 'function') {
-    return detail < 2 ? 'ƒ' : value.name.length === 0 ? 'ƒ ()' : 'ƒ ' + value.name + '()';
+    return depth < 2 ? 'ƒ' : value.name.length === 0 ? 'ƒ ()' : 'ƒ ' + value.name + '()';
   }
 
   let label = getConstructorName(value);
@@ -186,7 +156,7 @@ export function previewValue(value: unknown, detail: number = 2, options: Inspec
       label += '(' + length + ')';
     }
 
-    if (detail === 0 || length === 0) {
+    if (depth === 0 || length === 0) {
       return label !== undefined ? label : length === 0 ? '[]' : 'Array(' + length + ')';
     }
 
@@ -198,7 +168,7 @@ export function previewValue(value: unknown, detail: number = 2, options: Inspec
         str += '…';
         break;
       }
-      str += previewValue(value[index++], 0, options);
+      str += describeValue(value[index++], depth - 1, options);
     }
 
     return (label !== undefined ? label + ' ' : '') + '[' + str + ']';
@@ -211,7 +181,7 @@ export function previewValue(value: unknown, detail: number = 2, options: Inspec
   if (value instanceof Set) {
     label += '(' + value.size + ')';
 
-    if (detail === 0 || value.size === 0) {
+    if (depth === 0 || value.size === 0) {
       return label!;
     }
 
@@ -223,7 +193,7 @@ export function previewValue(value: unknown, detail: number = 2, options: Inspec
         str += '…';
         break;
       }
-      str += previewValue(item, 0, options);
+      str += describeValue(item, depth - 1, options);
     }
 
     return label + ' {' + str + '}';
@@ -232,7 +202,7 @@ export function previewValue(value: unknown, detail: number = 2, options: Inspec
   if (value instanceof Map) {
     label += '(' + value.size + ')';
 
-    if (detail === 0 || value.size === 0) {
+    if (depth === 0 || value.size === 0) {
       return label!;
     }
 
@@ -244,20 +214,20 @@ export function previewValue(value: unknown, detail: number = 2, options: Inspec
         str += '…';
         break;
       }
-      str += previewValue(entry[0], 0, options) + ' => ' + previewValue(entry[1], 0, options);
+      str += describeValue(entry[0], depth - 1, options) + ' => ' + describeValue(entry[1], depth - 1, options);
     }
 
     return label + ' {' + str + '}';
   }
 
-  if (detail === 0 && label !== undefined) {
+  if (depth === 0 && label !== undefined) {
     return label;
   }
 
   if (isIterable(value)) {
     try {
       for (const item of value) {
-        if (detail === 0) {
+        if (depth === 0) {
           return '{…}';
         }
         if (index > 0) {
@@ -267,7 +237,7 @@ export function previewValue(value: unknown, detail: number = 2, options: Inspec
           str += '…';
           break;
         }
-        str += previewValue(item, 0, options);
+        str += describeValue(item, depth - 1, options);
       }
     } catch {
       // noop
@@ -277,7 +247,7 @@ export function previewValue(value: unknown, detail: number = 2, options: Inspec
   // Properties
   if (index <= maxProperties) {
     for (const key of Reflect.ownKeys(value)) {
-      if (detail === 0) {
+      if (depth === 0) {
         return '{…}';
       }
       if (index > 0) {
@@ -287,11 +257,11 @@ export function previewValue(value: unknown, detail: number = 2, options: Inspec
         str += '…';
         break;
       }
-      str += key.toString() + ': ' + previewValue(value[key as keyof object], 0, options);
+      str += key.toString() + ': ' + describeValue(value[key as keyof object], depth - 1, options);
     }
   }
 
-  if (detail === 0 || index === 0) {
+  if (depth === 0 || index === 0) {
     return label !== undefined ? label : '{}';
   }
 

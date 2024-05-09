@@ -1,6 +1,10 @@
+:root {
+    --inspection-view-indent: 0
+}
+
 .InspectionView {
     display: flex;
-    margin-inline-start: calc(var(--indent, 0) * 1em);
+    margin-inline-start: calc(var(--inspection-view-indent) * 1em);
 }
 
 .ExpandCollapseToggle {
@@ -14,18 +18,18 @@
     padding-inline-start: 1em;
 }
 
-.KeyPreview {
+.keyDescription {
     color: var(--color-attribute-name-not-editable);
     flex: 0 0 auto;
     cursor: default;
 }
 
-.AfterKeyPreview {
+.AfterkeyDescription {
     color: var(--color-text);
-    margin-right: 0.5em;
+    margin-inline-end: 0.5em;
 }
 
-.ValuePreview {
+.valueDescription {
     color: var(--color-attribute-value);
     white-space: pre;
     overflow: hidden;

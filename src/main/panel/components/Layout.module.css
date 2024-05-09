@@ -1,3 +1,8 @@
+:root {
+    --horizontal-resize-percentage: 0;
+    --vertical-resize-percentage: 0;
+}
+
 .Layout {
     position: relative;
     width: 100%;

@@ -1,72 +1,66 @@
 import React from 'react';
-import { type Executor, type ExecutorManager, useExecutorManager, useExecutorSubscription } from 'react-executor';
-import type { Inspection } from '../inspect';
-import { useAPI } from './APIContext';
 import { Layout } from './components/Layout';
-import { InspectionView } from './components/InspectionView';
-import './normalize.module.css';
-import './root.module.css';
-
-export interface ExecutorLineItem {
-  executorIndex: number;
-  keyInspection: Inspection;
-}
-
-export function getOrCreateExecutorLineItemListExecutor(manager: ExecutorManager): Executor<ExecutorLineItem[]> {
-  return manager.getOrCreate('executor-line-item-list');
-}
+import { ListItem } from './components/ListItem';
+import { useIds, useInspectedId, useSuperficialInfo } from './executors';
+import { useContentClient } from './useContentClient';
 
 export const App = () => {
   return (
     <Layout
-      executorsChildren={<ExecutorLineItemListView />}
-      inspectedExecutorChildren={
-        <div>
-          <div>Key</div>
-          <div>Status</div>
-          <div>Value</div>
-          <div>Reason</div>
-          <div>Plugins</div>
-          <div>Annotations</div>
-        </div>
-      }
+      superficialInfoList={<SuperficialInfoList />}
+      inspectedInfo={<InspectedInfoView />}
     />
   );
 };
 
-const ExecutorLineItemListView = () => {
-  const executorLineItemListExecutor = getOrCreateExecutorLineItemListExecutor(useExecutorManager());
+const SuperficialInfoList = () => {
+  const ids = useIds();
 
-  useExecutorSubscription(executorLineItemListExecutor);
-
-  if (!executorLineItemListExecutor.isFulfilled) {
-    return 'Loading';
-  }
-
-  return executorLineItemListExecutor.get().map((preview, index) => (
-    <ExecutorLineItemView
-      executorLineItem={preview}
-      key={index}
+  return ids.map(id => (
+    <SuperficialInfoListItem
+      id={id}
+      key={id}
     />
   ));
 };
 
-interface ExecutorLineItemViewProps {
-  executorLineItem: ExecutorLineItem;
+interface SuperficialInfoListItemProps {
+  id: string;
 }
 
-const ExecutorLineItemView = ({ executorLineItem }: ExecutorLineItemViewProps) => {
-  const api = useAPI();
+const SuperficialInfoListItem = ({ id }: SuperficialInfoListItemProps) => {
+  const inspectedId = useInspectedId();
+  const info = useSuperficialInfo(id);
+  const contentClient = useContentClient();
 
   return (
-    <div>
-      <InspectionView
-        inspection={executorLineItem.keyInspection}
-        path={[]}
-        onInspectionRequested={path => {
-          api.getInspectionAt('key', executorLineItem.executorIndex, path);
-        }}
-      />
-    </div>
+    <ListItem
+      onClick={() => {
+        contentClient.startInspection(id);
+      }}
+      isSelected={id === inspectedId}
+    >
+      {info.keyDescription}
+    </ListItem>
   );
+};
+
+const InspectedInfoView = () => {
+  const inspectedId = useInspectedId();
+
+  if (inspectedId === null) {
+    return 'No pending inspection';
+  }
+
+  return <SuperficialInfoView inspectedId={inspectedId} />;
+};
+
+interface SuperficialInfoViewProps {
+  inspectedId: string;
+}
+
+const SuperficialInfoView = ({ inspectedId }: SuperficialInfoViewProps) => {
+  const superficialInfo = useSuperficialInfo(inspectedId);
+
+  return JSON.stringify(superficialInfo);
 };
