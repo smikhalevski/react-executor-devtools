@@ -6,6 +6,18 @@ module.exports = {
   svgProps: {
     role: 'image',
   },
+  svgoConfig: {
+    plugins: [
+      {
+        name: 'preset-default',
+        params: {
+          overrides: {
+            removeViewBox: false,
+          },
+        },
+      },
+    ],
+  },
   template(vars, { tpl }) {
     return tpl` import React from 'react';
 ${vars.imports};

@@ -1,7 +1,7 @@
 import React, { type ReactNode, useRef } from 'react';
 import css from './Layout.module.css';
 
-const SAFE_ZONE_PERCENTAGE = 0.2;
+const SAFE_ZONE_PERCENTAGE = 0.1;
 const RESIZE_PERCENTAGE_KEY = 'resize-percentage';
 
 const resizePercentageJson = localStorage.getItem(RESIZE_PERCENTAGE_KEY);

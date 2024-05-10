@@ -13,6 +13,7 @@ import {
   idsExecutor,
   inspectedIdExecutor,
 } from './executors';
+import { userMock } from './mocks';
 import { type ContentClient, ContentClientProvider } from './useContentClient';
 
 interface ExecutorMock {
@@ -31,22 +32,49 @@ interface ExecutorMock {
 const executorMocks: { [id: string]: ExecutorMock } = {
   [uuid()]: {
     key: ['user', 1],
-    value: { name: 'Bill' },
+    value: userMock,
     isFulfilled: true,
+    isActive: true,
     settledAt: Date.now(),
   },
   [uuid()]: {
+    key: ['user', 1],
+    value: userMock,
+    isFulfilled: true,
+    isActive: true,
+    invalidatedAt: Date.now(),
+    settledAt: Date.now(),
+  },
+  [uuid()]: {
+    key: ['user', 1],
+    value: userMock,
+    isFulfilled: true,
+    settledAt: Date.now(),
+    isPending: true,
+  },
+  [uuid()]: {
     key: ['user', 2],
-    value: { name: 'Brandon' },
+    value: userMock,
     isFulfilled: false,
+    isActive: true,
     settledAt: Date.now(),
     invalidatedAt: Date.now(),
+    isPending: true,
   },
   [uuid()]: {
     key: 'account',
     reason: new DOMException('Aborted', 'AbortError'),
     isFulfilled: false,
     settledAt: Date.now(),
+  },
+  [uuid()]: {
+    key: 'account',
+    reason: new DOMException('Aborted', 'AbortError'),
+  },
+  [uuid()]: {
+    key: 'account',
+    reason: new DOMException('Aborted', 'AbortError'),
+    isPending: true,
   },
 };
 

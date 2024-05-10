@@ -1,8 +1,8 @@
 import { clsx } from 'clsx';
 import React, { useState } from 'react';
-import { ArrowRight01StrokeRounded } from '../../gen/icons/ArrowRight01StrokeRounded';
 
 import type { Inspection } from '../../content/types';
+import { ChevronIcon } from '../../gen/icons/ChevronIcon';
 import css from './InspectionView.module.css';
 
 export interface InspectionViewProps {
@@ -29,12 +29,14 @@ export const InspectionView = ({ inspection, onExpanded, path = [] }: Inspection
         className={clsx(css.InspectionView, !inspection.hasChildren && css.ExpandCollapseToggleSpacer)}
         onClick={inspection.hasChildren ? handleExpandCollapseToggle : undefined}
       >
-        {inspection.hasChildren && <ArrowRight01StrokeRounded className={css.ExpandCollapseToggle} />}
-        {inspection.keyDescription !== undefined && (
-          <span className={css.keyDescription}>{inspection.keyDescription}</span>
+        {inspection.hasChildren && (
+          <ChevronIcon className={clsx(css.ExpandCollapseToggle, isExpanded && css.Expanded)} />
         )}
-        {inspection.keyDescription !== undefined && <span className={css.AfterkeyDescription}>{':'}</span>}
-        <span className={css.valueDescription}>{inspection.valueDescription}</span>
+        {inspection.keyDescription !== undefined && (
+          <span className={css.KeyDescription}>{inspection.keyDescription}</span>
+        )}
+        {inspection.keyDescription !== undefined && <span className={css.AfterKeyDescription}>{':'}</span>}
+        <span className={css.ValueDescription}>{inspection.valueDescription}</span>
       </span>
 
       {isExpanded &&

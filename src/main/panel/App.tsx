@@ -1,8 +1,12 @@
 import React, { Fragment } from 'react';
 import type { InspectionPart } from '../content/types';
+import { DebugIcon } from '../gen/icons/DebugIcon';
+import { WarningIcon } from '../gen/icons/WarningIcon';
 import { InspectionView } from './components/InspectionView';
 import { Layout } from './components/Layout';
 import { ListItem } from './components/ListItem';
+import { StatsIndicator } from './components/StatsIndicator';
+import css from './components/StatsIndicator.module.css';
 import { useIds, useInspectedId, usePartInspection, useSuperficialInfo } from './executors';
 import { useContentClient } from './useContentClient';
 
@@ -32,7 +36,7 @@ interface SuperficialInfoListItemProps {
 
 const SuperficialInfoListItem = ({ id }: SuperficialInfoListItemProps) => {
   const inspectedId = useInspectedId();
-  const info = useSuperficialInfo(id);
+  const superficialInfo = useSuperficialInfo(id);
   const contentClient = useContentClient();
 
   return (
@@ -41,8 +45,10 @@ const SuperficialInfoListItem = ({ id }: SuperficialInfoListItemProps) => {
         contentClient.startInspection(id);
       }}
       isSelected={id === inspectedId}
+      isDeactivated={!superficialInfo.stats.isActive}
     >
-      {info.keyDescription}
+      <StatsIndicator stats={superficialInfo.stats} />
+      {superficialInfo.keyDescription}
     </ListItem>
   );
 };
@@ -77,13 +83,13 @@ const InspectedInfoView = () => {
       />
       <hr />
       {'Plugins'}
-      <PartInspectionViewView
+      <PartChildrenInspectionViewView
         inspectedId={inspectedId}
         part={'plugins'}
       />
       <hr />
       {'Annotations'}
-      <PartInspectionViewView
+      <PartChildrenInspectionViewView
         inspectedId={inspectedId}
         part={'annotations'}
       />
@@ -98,27 +104,42 @@ interface SuperficialInfoViewProps {
 const SuperficialInfoView = ({ inspectedId }: SuperficialInfoViewProps) => {
   const superficialInfo = useSuperficialInfo(inspectedId);
 
+  const statuses = [];
+
+  statuses.push(
+    superficialInfo.stats.settledAt === 0 ? 'Unsettled' : superficialInfo.stats.isFulfilled ? 'Fulfilled' : 'Rejected'
+  );
+  if (superficialInfo.stats.invalidatedAt !== 0) {
+    statuses.push('Invalidated');
+  }
+  if (superficialInfo.stats.isPending) {
+    statuses.push('Pending');
+  }
+
   return (
     <>
-      {superficialInfo.stats.settledAt === 0
-        ? '⚪️ Clean'
-        : superficialInfo.stats.isFulfilled
-          ? '🟢 Fulfilled'
-          : '🔴 Rejected'}
+      <StatsIndicator stats={superficialInfo.stats} />
 
-      {superficialInfo.stats.isActive ? (
+      {statuses.join(', ')}
+
+      {!superficialInfo.stats.isActive && (
         <>
           <br />
-          {'🔌 Active'}
-        </>
-      ) : null}
-
-      {superficialInfo.stats.invalidatedAt === 0 ? null : (
-        <>
-          <br />
-          {'❌ Invalidated'}
+          <WarningIcon
+            width={15}
+            height={15}
+            className={css.Warning}
+          />
+          {'Deactivated'}
         </>
       )}
+
+      <br />
+      <DebugIcon
+        width={15}
+        height={15}
+      />
+      {'Debug'}
     </>
   );
 };
@@ -133,7 +154,7 @@ const PartInspectionViewView = ({ inspectedId, part }: PartInspectionViewProps) 
   const contentClient = useContentClient();
 
   if (partInspection === null) {
-    return 'Loading';
+    return <div>{'Loading'}</div>;
   }
 
   return (
@@ -145,4 +166,32 @@ const PartInspectionViewView = ({ inspectedId, part }: PartInspectionViewProps) 
       }}
     />
   );
+};
+
+interface PartChildrenInspectionViewProps {
+  inspectedId: string;
+  part: InspectionPart;
+}
+
+const PartChildrenInspectionViewView = ({ inspectedId, part }: PartChildrenInspectionViewProps) => {
+  const partInspection = usePartInspection(inspectedId, part);
+  const contentClient = useContentClient();
+
+  if (partInspection === null) {
+    return <div>{'Loading'}</div>;
+  }
+
+  if (!partInspection.hasChildren) {
+    return <div>{'No ' + part}</div>;
+  }
+
+  return partInspection.children?.map(inspection => (
+    <InspectionView
+      inspection={partInspection}
+      path={[]}
+      onExpanded={path => {
+        contentClient.expandInspection(inspectedId, part, path);
+      }}
+    />
+  ));
 };

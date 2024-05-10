@@ -10,7 +10,7 @@
     "build": "mkdir -p build && cp LICENSE.txt src/main/devtools.html src/main/manifest.json src/main/panel/panel.html build/ && rollup --config --watch",
     "build:icons": "svgr src/main/icons",
     "start": "vite",
-    "clean": "rimraf build coverage",
+    "clean": "rimraf src/main/gen build coverage",
     "test": "jest"
   },
   "repository": {

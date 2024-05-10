@@ -8,28 +8,30 @@
 }
 
 .ExpandCollapseToggle {
-    flex: 0 0 1em;
-    width: 1em;
-    padding: 0;
+    width: 15px;
+    height: 15px;
     color: var(--color-expand-collapse-toggle);
+}
+.ExpandCollapseToggle.Expanded {
+    transform: rotate(90deg);
 }
 
 .ExpandCollapseToggleSpacer {
-    padding-inline-start: 1em;
+    padding-inline-start: 15px;
 }
 
-.keyDescription {
+.KeyDescription {
     color: var(--color-attribute-name-not-editable);
     flex: 0 0 auto;
     cursor: default;
 }
 
-.AfterkeyDescription {
+.AfterKeyDescription {
     color: var(--color-text);
     margin-inline-end: 0.5em;
 }
 
-.valueDescription {
+.ValueDescription {
     color: var(--color-attribute-value);
     white-space: pre;
     overflow: hidden;
