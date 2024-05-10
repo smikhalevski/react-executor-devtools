@@ -45,7 +45,7 @@ export interface SuperficialInfo {
   stats: Stats;
 }
 
-export type InspectablePart = 'key' | 'value' | 'reason' | 'annotations' | 'plugins';
+export type InspectionPart = 'key' | 'value' | 'reason' | 'annotations' | 'plugins';
 
 export type PanelMessage =
   | { type: 'devtools_panel_opened' }
@@ -53,7 +53,7 @@ export type PanelMessage =
   | { type: 'retry_executor'; payload: { id: string } }
   | { type: 'invalidate_executor'; payload: { id: string } }
   | { type: 'inspection_started'; payload: { id: string } }
-  | { type: 'inspection_expanded'; payload: { id: string; part: InspectablePart; path: number[] } };
+  | { type: 'inspection_expanded'; payload: { id: string; part: InspectionPart; path: number[] } };
 
 export type ContentMessage =
   | { type: 'hello'; payload: SuperficialInfo[] }

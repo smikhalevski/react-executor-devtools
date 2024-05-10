@@ -19,7 +19,7 @@ export interface InspectOptions {
  * @param options Additional options.
  * @returns The tree of {@link Inspection} objects.
  */
-export function inspect(value: unknown, depth = 0, options: InspectOptions = {}): Inspection {
+export function inspect(value: unknown, depth = 1, options: InspectOptions = {}): Inspection {
   if (
     value === null ||
     typeof value !== 'object' ||
@@ -129,9 +129,7 @@ export function describeValue(value: unknown, depth: number = 2, options: Inspec
   }
 
   if (typeof value === 'string' || value instanceof String) {
-    str = JSON.stringify(value).replace(/\\\\/g, '\\');
-
-    return str.length > maxStringLength + 2 ? ellipsis(str, maxStringLength) + '"' : str;
+    return inspectString(value, maxStringLength);
   }
 
   if (typeof value === 'symbol' || value instanceof Symbol) {
@@ -148,6 +146,10 @@ export function describeValue(value: unknown, depth: number = 2, options: Inspec
 
   let label = getConstructorName(value);
   let index = 0;
+
+  if (value instanceof Error) {
+    return label + '(' + inspectString(value.message, maxStringLength) + ')';
+  }
 
   if (isArrayOrTypedArray(value)) {
     const { length } = value;
@@ -294,6 +296,12 @@ function getConstructorName(value: object): string | undefined {
   }
 
   return name;
+}
+
+function inspectString(value: string | String, maxLength: number): string {
+  const str = JSON.stringify(value).replace(/\\\\/g, '\\');
+
+  return str.length > maxLength + 2 ? ellipsis(str, maxLength) + '"' : str;
 }
 
 /**

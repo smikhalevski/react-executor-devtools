@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import type { InspectablePart } from '../content/types';
+import type { InspectionPart } from '../content/types';
 
 export interface ContentClient {
   startInspection(id: string): void;
@@ -8,7 +8,7 @@ export interface ContentClient {
 
   invalidateExecutor(id: string): void;
 
-  expandInspection(id: string, part: InspectablePart, path: number[]): void;
+  expandInspection(id: string, part: InspectionPart, path: number[]): void;
 }
 
 const ContentClientContext = createContext<ContentClient | null>(null);

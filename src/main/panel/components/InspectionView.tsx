@@ -7,18 +7,18 @@ import css from './InspectionView.module.css';
 
 export interface InspectionViewProps {
   inspection: Inspection;
-  path: number[];
-  onInspectionRequested: (path: number[]) => void;
+  onExpanded: (path: number[]) => void;
+  path?: number[];
 }
 
-export const InspectionView = ({ inspection, onInspectionRequested, path }: InspectionViewProps) => {
+export const InspectionView = ({ inspection, onExpanded, path = [] }: InspectionViewProps) => {
   const [isExpanded, setExpanded] = useState(false);
 
   const handleExpandCollapseToggle = () => {
     setExpanded(isExpanded => !isExpanded);
 
     if (inspection.children === undefined) {
-      onInspectionRequested(path);
+      onExpanded(path);
     }
   };
 
@@ -43,7 +43,7 @@ export const InspectionView = ({ inspection, onInspectionRequested, path }: Insp
             key={index}
             inspection={child}
             path={path.concat(index)}
-            onInspectionRequested={onInspectionRequested}
+            onExpanded={onExpanded}
           />
         )) || (
           <span

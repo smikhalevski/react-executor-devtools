@@ -1,6 +1,6 @@
 import { type Executor, ExecutorManager, useExecutorSubscription } from 'react-executor';
 import detachDeactivated from 'react-executor/plugin/detachDeactivated';
-import type { InspectablePart, Inspection, SuperficialInfo } from '../content/types';
+import type { InspectionPart, Inspection, SuperficialInfo } from '../content/types';
 
 export const executorManager = new ExecutorManager();
 
@@ -15,7 +15,7 @@ export function getOrCreateSuperficialInfoExecutor(
   return executorManager.getOrCreate(`superficial_info_${id}`, initialValue, [detachDeactivated(0)]);
 }
 
-export function getOrCreatePartInspectionExecutor(id: string, part: InspectablePart): Executor<Inspection | null> {
+export function getOrCreatePartInspectionExecutor(id: string, part: InspectionPart): Executor<Inspection | null> {
   return executorManager.getOrCreate<Inspection | null>(`inspection_${id}_${part}`, null, [detachDeactivated(0)]);
 }
 
@@ -35,7 +35,7 @@ export function useSuperficialInfo(id: string): SuperficialInfo {
   return executor.get();
 }
 
-export function usePartInspection(id: string, part: InspectablePart): Inspection | null {
+export function usePartInspection(id: string, part: InspectionPart): Inspection | null {
   const executor = getOrCreatePartInspectionExecutor(id, part);
   useExecutorSubscription(executor);
   return executor.get();

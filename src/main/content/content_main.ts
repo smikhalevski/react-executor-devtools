@@ -1,6 +1,13 @@
 import type { Executor, ExecutorPlugin } from 'react-executor';
 import { describeValue, inspect } from './inspect';
-import type { ContentMessage, Inspection, PanelMessage, Stats, SuperficialInfo } from './types';
+import {
+  type ContentMessage,
+  INSPECTED_VALUE,
+  type Inspection,
+  type PanelMessage,
+  type Stats,
+  type SuperficialInfo,
+} from './types';
 import { uuid } from './uuid';
 
 interface InspectableInfo {
@@ -108,6 +115,8 @@ function receiveMessage(message: PanelMessage): void {
       for (const index of path) {
         inspection = inspection.children![index];
       }
+
+      inspection.children = inspect(inspection[INSPECTED_VALUE]).children;
 
       sendMessage({ type: `${part}_changed`, payload: { id: inspectableInfo.id, inspection } });
       break;

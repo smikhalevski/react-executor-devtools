@@ -2,55 +2,101 @@ import './panel.module.css';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { ExecutorManagerProvider } from 'react-executor';
-import { describeValue } from '../content/inspect';
-import type { SuperficialInfo } from '../content/types';
+import { describeValue, inspect } from '../content/inspect';
+import { INSPECTED_VALUE } from '../content/types';
 import { uuid } from '../content/uuid';
 import { App } from './App';
-import { executorManager, getOrCreateSuperficialInfoExecutor, idsExecutor, inspectedIdExecutor } from './executors';
+import {
+  executorManager,
+  getOrCreatePartInspectionExecutor,
+  getOrCreateSuperficialInfoExecutor,
+  idsExecutor,
+  inspectedIdExecutor,
+} from './executors';
 import { type ContentClient, ContentClientProvider } from './useContentClient';
 
-const superficialInfoMocks: SuperficialInfo[] = [
-  {
-    id: uuid(),
-    keyDescription: describeValue(['user', 1]),
-    origin: window.location.origin,
-    stats: {
-      settledAt: 0,
-      invalidatedAt: 0,
-      isFulfilled: false,
-      isPending: false,
-      isActive: false,
-    },
-  },
-  {
-    id: uuid(),
-    keyDescription: describeValue(['user', 2]),
-    origin: window.location.origin,
-    stats: {
-      settledAt: 0,
-      invalidatedAt: 0,
-      isFulfilled: false,
-      isPending: false,
-      isActive: false,
-    },
-  },
-];
-
-const ids = [];
-for (const superficialInfo of superficialInfoMocks) {
-  ids.push(superficialInfo.id);
-  getOrCreateSuperficialInfoExecutor(superficialInfo.id, superficialInfo);
+interface ExecutorMock {
+  key?: unknown;
+  value?: unknown;
+  reason?: unknown;
+  plugins?: unknown;
+  annotations?: unknown;
+  settledAt?: number;
+  invalidatedAt?: number;
+  isFulfilled?: boolean;
+  isPending?: boolean;
+  isActive?: boolean;
 }
 
-idsExecutor.resolve(ids);
+const executorMocks: { [id: string]: ExecutorMock } = {
+  [uuid()]: {
+    key: ['user', 1],
+    value: { name: 'Bill' },
+    isFulfilled: true,
+    settledAt: Date.now(),
+  },
+  [uuid()]: {
+    key: ['user', 2],
+    value: { name: 'Brandon' },
+    isFulfilled: false,
+    settledAt: Date.now(),
+    invalidatedAt: Date.now(),
+  },
+  [uuid()]: {
+    key: 'account',
+    reason: new DOMException('Aborted', 'AbortError'),
+    isFulfilled: false,
+    settledAt: Date.now(),
+  },
+};
+
+for (const [id, executor] of Object.entries(executorMocks)) {
+  getOrCreateSuperficialInfoExecutor(id, {
+    id,
+    keyDescription: describeValue(executor.key),
+    origin: window.location.origin,
+    stats: {
+      settledAt: executor.settledAt || 0,
+      invalidatedAt: executor.invalidatedAt || 0,
+      isFulfilled: executor.isFulfilled || false,
+      isPending: executor.isPending || false,
+      isActive: executor.isActive || false,
+    },
+  });
+}
+
+idsExecutor.resolve(Object.keys(executorMocks));
 
 const contentClient: ContentClient = {
   startInspection(id) {
     inspectedIdExecutor.resolve(id);
+
+    getOrCreatePartInspectionExecutor(id, 'key').resolve(inspect(executorMocks[id].key));
+    getOrCreatePartInspectionExecutor(id, 'value').resolve(inspect(executorMocks[id].value));
+    getOrCreatePartInspectionExecutor(id, 'reason').resolve(inspect(executorMocks[id].reason));
+    getOrCreatePartInspectionExecutor(id, 'plugins').resolve(inspect(executorMocks[id].plugins));
+    getOrCreatePartInspectionExecutor(id, 'annotations').resolve(inspect(executorMocks[id].annotations));
   },
+
   retryExecutor(id) {},
+
   invalidateExecutor(id) {},
-  expandInspection(id, part, path) {},
+
+  expandInspection(id, part, path) {
+    const inspectionExecutor = getOrCreatePartInspectionExecutor(id, part);
+
+    let inspection = inspectionExecutor.get();
+    if (inspection === null) {
+      return;
+    }
+    for (const index of path) {
+      inspection = inspection.children![index];
+    }
+
+    inspection.children = inspect(inspection[INSPECTED_VALUE]).children;
+
+    inspectionExecutor.resolve(inspectionExecutor.get());
+  },
 };
 
 ReactDOM.createRoot(document.getElementById('container')!).render(
