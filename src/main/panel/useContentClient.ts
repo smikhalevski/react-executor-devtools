@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import type { InspectionPart } from '../content/types';
+import type { InspectionPart } from '../types';
 
 export interface ContentClient {
   startInspection(id: string): void;

@@ -8,16 +8,17 @@
 }
 
 .ExpandCollapseToggle {
-    width: 15px;
-    height: 15px;
+    width: 14px;
+    height: 14px;
     color: var(--color-expand-collapse-toggle);
+    vertical-align: top;
 }
 .ExpandCollapseToggle.Expanded {
     transform: rotate(90deg);
 }
 
 .ExpandCollapseToggleSpacer {
-    padding-inline-start: 15px;
+    padding-inline-start: 14px;
 }
 
 .KeyDescription {

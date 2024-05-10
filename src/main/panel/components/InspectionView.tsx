@@ -1,17 +1,18 @@
 import { clsx } from 'clsx';
 import React, { useState } from 'react';
-
-import type { Inspection } from '../../content/types';
 import { ChevronIcon } from '../../gen/icons/ChevronIcon';
+import { DebugIcon } from '../../gen/icons/DebugIcon';
+import type { Inspection } from '../../types';
 import css from './InspectionView.module.css';
 
 export interface InspectionViewProps {
   inspection: Inspection;
   onExpanded: (path: number[]) => void;
   path?: number[];
+  indent?: number;
 }
 
-export const InspectionView = ({ inspection, onExpanded, path = [] }: InspectionViewProps) => {
+export const InspectionView = ({ inspection, onExpanded, path = [], indent = 0 }: InspectionViewProps) => {
   const [isExpanded, setExpanded] = useState(false);
 
   const handleExpandCollapseToggle = () => {
@@ -25,7 +26,7 @@ export const InspectionView = ({ inspection, onExpanded, path = [] }: Inspection
   return (
     <>
       <span
-        style={{ '--inspection-view-indent': path.length }}
+        style={{ '--inspection-view-indent': indent }}
         className={clsx(css.InspectionView, !inspection.hasChildren && css.ExpandCollapseToggleSpacer)}
         onClick={inspection.hasChildren ? handleExpandCollapseToggle : undefined}
       >
@@ -36,7 +37,16 @@ export const InspectionView = ({ inspection, onExpanded, path = [] }: Inspection
           <span className={css.KeyDescription}>{inspection.keyDescription}</span>
         )}
         {inspection.keyDescription !== undefined && <span className={css.AfterKeyDescription}>{':'}</span>}
-        <span className={css.ValueDescription}>{inspection.valueDescription}</span>
+        <span className={css.ValueDescription}>
+          {inspection.annotations?.isExecutor && (
+            <DebugIcon
+              width={14}
+              height={14}
+              style={{ verticalAlign: 'top' }}
+            />
+          )}
+          {inspection.valueDescription}
+        </span>
       </span>
 
       {isExpanded &&
@@ -45,11 +55,12 @@ export const InspectionView = ({ inspection, onExpanded, path = [] }: Inspection
             key={index}
             inspection={child}
             path={path.concat(index)}
+            indent={indent + 1}
             onExpanded={onExpanded}
           />
         )) || (
           <span
-            style={{ '--inspection-view-indent': path.length + 1 }}
+            style={{ '--inspection-view-indent': indent + 1 }}
             className={clsx(css.InspectionView, css.ExpandCollapseToggleSpacer)}
           >
             {'Loading'}

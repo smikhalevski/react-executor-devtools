@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react';
-import type { InspectionPart } from '../content/types';
+import type { InspectionPart } from '../types';
 import { DebugIcon } from '../gen/icons/DebugIcon';
 import { WarningIcon } from '../gen/icons/WarningIcon';
 import { InspectionView } from './components/InspectionView';
@@ -126,8 +126,8 @@ const SuperficialInfoView = ({ inspectedId }: SuperficialInfoViewProps) => {
         <>
           <br />
           <WarningIcon
-            width={15}
-            height={15}
+            width={14}
+            height={14}
             className={css.Warning}
           />
           {'Deactivated'}
@@ -136,8 +136,8 @@ const SuperficialInfoView = ({ inspectedId }: SuperficialInfoViewProps) => {
 
       <br />
       <DebugIcon
-        width={15}
-        height={15}
+        width={14}
+        height={14}
       />
       {'Debug'}
     </>
@@ -185,10 +185,10 @@ const PartChildrenInspectionViewView = ({ inspectedId, part }: PartChildrenInspe
     return <div>{'No ' + part}</div>;
   }
 
-  return partInspection.children?.map(inspection => (
+  return partInspection.children?.map((inspection, index) => (
     <InspectionView
-      inspection={partInspection}
-      path={[]}
+      inspection={inspection}
+      path={[index]}
       onExpanded={path => {
         contentClient.expandInspection(inspectedId, part, path);
       }}

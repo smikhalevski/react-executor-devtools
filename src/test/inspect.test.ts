@@ -1,5 +1,5 @@
-import { describeValue, inspect } from '../main/content/inspect';
-import { INSPECTED_VALUE } from '../main/content/types';
+import { describeValue, inspect } from '../main/inspect';
+import { INSPECTED_VALUE } from '../main/types';
 
 describe('describeValue', () => {
   test('null', () => {
@@ -33,23 +33,23 @@ describe('describeValue', () => {
   });
 
   test('string', () => {
-    expect(describeValue('aaa')).toBe('"aaa"');
+    expect(describeValue('aaa')).toBe("'aaa'");
 
-    expect(describeValue('aaa bbb', 0, { maxStringLength: 5 })).toBe('"aaa…"');
-    expect(describeValue('aaa bbb ccc', 0, { maxStringLength: 9 })).toBe('"aaa bbb…"');
-    expect(describeValue('aaabbb bbb', 0, { maxStringLength: 5 })).toBe('"aaab…"');
-    expect(describeValue('  aaa bbb', 0, { maxStringLength: 5 })).toBe('"  aa…"');
-    expect(describeValue('aaa\tbbb', 0, { maxStringLength: 5 })).toBe('"aaa\\…"');
-    expect(describeValue('\t\n')).toBe('"\\t\\n"');
+    expect(describeValue('aaa bbb', 0, { maxStringLength: 5 })).toBe("'aaa…'");
+    expect(describeValue('aaa bbb ccc', 0, { maxStringLength: 9 })).toBe("'aaa bbb…'");
+    expect(describeValue('aaabbb bbb', 0, { maxStringLength: 5 })).toBe("'aaabb…'");
+    expect(describeValue('  aaa bbb', 0, { maxStringLength: 5 })).toBe("'  aaa…'");
+    expect(describeValue('aaa\tbbb', 0, { maxStringLength: 4 })).toBe("'aaa\\…'");
+    expect(describeValue('\t\n')).toBe("'\\t\\n'");
   });
 
   test('function', () => {
     expect(describeValue(() => 111, 0)).toBe('ƒ');
-    expect(describeValue(() => 111, 1)).toBe('ƒ');
+    expect(describeValue(() => 111, 1)).toBe('ƒ ()');
     expect(describeValue(() => 111, 2)).toBe('ƒ ()');
 
     expect(describeValue(function aaa() {}, 0)).toBe('ƒ');
-    expect(describeValue(function aaa() {}, 1)).toBe('ƒ');
+    expect(describeValue(function aaa() {}, 1)).toBe('ƒ aaa()');
     expect(describeValue(function aaa() {}, 2)).toBe('ƒ aaa()');
   });
 
@@ -110,15 +110,15 @@ describe('describeValue', () => {
     expect(describeValue(new Set([{ aaa: 111 }]), 0)).toBe('Set(1)');
     expect(describeValue(new Set([{ aaa: 111 }]), 1)).toBe('Set(1) {{…}}');
     expect(describeValue(new Set([{ aaa: 111 }]), 2)).toBe('Set(1) {{aaa: 111}}');
-    expect(describeValue(new Set(['aaa', 111, 222, 333]), 2, { maxProperties: 3 })).toBe('Set(4) {"aaa", 111, 222, …}');
+    expect(describeValue(new Set(['aaa', 111, 222, 333]), 2, { maxProperties: 3 })).toBe("Set(4) {'aaa', 111, 222, …}");
   });
 
   describe('Map', () => {
     test('default', () => {
       expect(describeValue(new Map(), 0)).toBe('Map(0)');
       expect(describeValue(new Map([[{ aaa: 111 }, 'bbb']]), 0)).toBe('Map(1)');
-      expect(describeValue(new Map([[{ aaa: 111 }, 'bbb']]), 1)).toBe('Map(1) {{…} => "bbb"}');
-      expect(describeValue(new Map([[{ aaa: 111 }, 'bbb']]), 2)).toBe('Map(1) {{aaa: 111} => "bbb"}');
+      expect(describeValue(new Map([[{ aaa: 111 }, 'bbb']]), 1)).toBe("Map(1) {{…} => 'bbb'}");
+      expect(describeValue(new Map([[{ aaa: 111 }, 'bbb']]), 2)).toBe("Map(1) {{aaa: 111} => 'bbb'}");
     });
 
     test('extended Map', () => {
@@ -130,8 +130,8 @@ describe('describeValue', () => {
 
       expect(describeValue(new Xxx(), 0)).toBe('Xxx(0)');
       expect(describeValue(new Xxx([[{ aaa: 111 }, 'bbb']]), 0)).toBe('Xxx(1)');
-      expect(describeValue(new Xxx([[{ aaa: 111 }, 'bbb']]), 1)).toBe('Xxx(1) {{…} => "bbb"}');
-      expect(describeValue(new Xxx([[{ aaa: 111 }, 'bbb']]), 2)).toBe('Xxx(1) {{aaa: 111} => "bbb"}');
+      expect(describeValue(new Xxx([[{ aaa: 111 }, 'bbb']]), 1)).toBe("Xxx(1) {{…} => 'bbb'}");
+      expect(describeValue(new Xxx([[{ aaa: 111 }, 'bbb']]), 2)).toBe("Xxx(1) {{aaa: 111} => 'bbb'}");
     });
   });
 
@@ -173,7 +173,7 @@ describe('describeValue', () => {
 
       expect(describeValue(xxx, 0)).toBe('{…}');
       expect(describeValue(xxx, 1)).toBe('{111, 222, 333, Symbol(Symbol.iterator): ƒ}');
-      expect(describeValue(xxx, 2)).toBe('{111, 222, 333, Symbol(Symbol.iterator): ƒ}');
+      expect(describeValue(xxx, 2)).toBe('{111, 222, 333, Symbol(Symbol.iterator): ƒ [Symbol.iterator]()}');
       expect(describeValue(xxx, 2, { maxProperties: 2 })).toBe('{111, 222, …}');
 
       expect(describeValue({ *[Symbol.iterator]() {} }, 0)).toBe('{…}');
@@ -192,7 +192,9 @@ describe('describeValue', () => {
 
       expect(describeValue(xxx, 0)).toBe('{…}');
       expect(describeValue(xxx, 1)).toBe('{111, 222, aaa: 333, Symbol(Symbol.iterator): ƒ, Symbol(ddd): 444}');
-      expect(describeValue(xxx, 2)).toBe('{111, 222, aaa: 333, Symbol(Symbol.iterator): ƒ, Symbol(ddd): 444}');
+      expect(describeValue(xxx, 2)).toBe(
+        '{111, 222, aaa: 333, Symbol(Symbol.iterator): ƒ [Symbol.iterator](), Symbol(ddd): 444}'
+      );
       expect(describeValue(xxx, 2, { maxProperties: 2 })).toBe('{111, 222, …}');
     });
 
@@ -265,7 +267,7 @@ describe('describeValue', () => {
 
 describe('inspect', () => {
   test('primitive value', () => {
-    expect(inspect('aaa', 0)).toEqual({ [INSPECTED_VALUE]: 'aaa', valueDescription: '"aaa"' });
+    expect(inspect('aaa', 0)).toEqual({ [INSPECTED_VALUE]: 'aaa', valueDescription: "'aaa'" });
     expect(inspect(111, 0)).toEqual({ [INSPECTED_VALUE]: 111, valueDescription: '111' });
     expect(inspect(NaN, 0)).toEqual({ [INSPECTED_VALUE]: NaN, valueDescription: 'NaN' });
     expect(inspect(Infinity, 0)).toEqual({ [INSPECTED_VALUE]: Infinity, valueDescription: 'Infinity' });

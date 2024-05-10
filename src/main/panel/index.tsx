@@ -1,10 +1,8 @@
-import './panel.module.css';
+import './index.css';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { ExecutorManagerProvider } from 'react-executor';
-import { describeValue, inspect } from '../content/inspect';
-import { INSPECTED_VALUE } from '../content/types';
-import { uuid } from '../content/uuid';
+import type { ContentMessage, PanelMessage } from '../types';
 import { App } from './App';
 import {
   executorManager,
@@ -13,119 +11,99 @@ import {
   idsExecutor,
   inspectedIdExecutor,
 } from './executors';
-import { userMock } from './mocks';
 import { type ContentClient, ContentClientProvider } from './useContentClient';
 
-interface ExecutorMock {
-  key?: unknown;
-  value?: unknown;
-  reason?: unknown;
-  plugins?: unknown;
-  annotations?: unknown;
-  settledAt?: number;
-  invalidatedAt?: number;
-  isFulfilled?: boolean;
-  isPending?: boolean;
-  isActive?: boolean;
+chrome.runtime.onMessage.addListener((message, sender) => {
+  if (sender.id === chrome.runtime.id) {
+    receiveMessage(message);
+  }
+});
+
+window.addEventListener('beforeunload', () => {
+  sendMessage({ type: 'devtools_panel_closed' });
+});
+
+function sendMessage(message: PanelMessage): void {
+  (message as any).source = 'react_executor_devtools_panel';
+  console.log('panel/sendMessage', message);
+  chrome.tabs.sendMessage(chrome.devtools.inspectedWindow.tabId, message);
 }
 
-const executorMocks: { [id: string]: ExecutorMock } = {
-  [uuid()]: {
-    key: ['user', 1],
-    value: userMock,
-    isFulfilled: true,
-    isActive: true,
-    settledAt: Date.now(),
-  },
-  [uuid()]: {
-    key: ['user', 1],
-    value: userMock,
-    isFulfilled: true,
-    isActive: true,
-    invalidatedAt: Date.now(),
-    settledAt: Date.now(),
-  },
-  [uuid()]: {
-    key: ['user', 1],
-    value: userMock,
-    isFulfilled: true,
-    settledAt: Date.now(),
-    isPending: true,
-  },
-  [uuid()]: {
-    key: ['user', 2],
-    value: userMock,
-    isFulfilled: false,
-    isActive: true,
-    settledAt: Date.now(),
-    invalidatedAt: Date.now(),
-    isPending: true,
-  },
-  [uuid()]: {
-    key: 'account',
-    reason: new DOMException('Aborted', 'AbortError'),
-    isFulfilled: false,
-    settledAt: Date.now(),
-  },
-  [uuid()]: {
-    key: 'account',
-    reason: new DOMException('Aborted', 'AbortError'),
-  },
-  [uuid()]: {
-    key: 'account',
-    reason: new DOMException('Aborted', 'AbortError'),
-    isPending: true,
-  },
-};
+function receiveMessage(message: ContentMessage): void {
+  console.log('panel/receiveMessage', message);
+  switch (message.type) {
+    case 'hello':
+      for (const superficialInfo of message.payload) {
+        getOrCreateSuperficialInfoExecutor(superficialInfo.id).resolve(superficialInfo);
+      }
+      idsExecutor.resolve(message.payload.map(superficialInfo => superficialInfo.id));
+      break;
 
-for (const [id, executor] of Object.entries(executorMocks)) {
-  getOrCreateSuperficialInfoExecutor(id, {
-    id,
-    keyDescription: describeValue(executor.key),
-    origin: window.location.origin,
-    stats: {
-      settledAt: executor.settledAt || 0,
-      invalidatedAt: executor.invalidatedAt || 0,
-      isFulfilled: executor.isFulfilled || false,
-      isPending: executor.isPending || false,
-      isActive: executor.isActive || false,
-    },
-  });
+    case 'executor_attached':
+      if (idsExecutor.get().includes(message.payload.id)) {
+        break;
+      }
+      idsExecutor.resolve(idsExecutor.get().concat(message.payload.id));
+      getOrCreateSuperficialInfoExecutor(message.payload.id).resolve(message.payload);
+      break;
+
+    case 'executor_detached':
+      const ids = idsExecutor.get();
+      const index = ids.indexOf(message.payload.id);
+
+      if (inspectedIdExecutor.value === message.payload.id) {
+        inspectedIdExecutor.resolve(null);
+      }
+      if (index !== -1) {
+        ids.splice(index, 1);
+        idsExecutor.resolve(ids);
+      }
+      break;
+
+    case 'stats_changed':
+      const superficialInfoExecutor = getOrCreateSuperficialInfoExecutor(message.payload.id);
+      Object.assign(superficialInfoExecutor.value!.stats, message.payload.stats);
+      superficialInfoExecutor.resolve(superficialInfoExecutor.value!);
+      break;
+
+    case 'key_changed':
+    case 'value_changed':
+    case 'reason_changed':
+    case 'plugins_changed':
+    case 'annotations_changed':
+      if (inspectedIdExecutor.value !== message.payload.id) {
+        break;
+      }
+      const part = {
+        key_changed: 'key',
+        value_changed: 'value',
+        reason_changed: 'reason',
+        plugins_changed: 'plugins',
+        annotations_changed: 'annotations',
+      } as const;
+
+      getOrCreatePartInspectionExecutor(message.payload.id, part[message.type]).resolve(message.payload.inspection);
+      break;
+  }
 }
-
-idsExecutor.resolve(Object.keys(executorMocks));
 
 const contentClient: ContentClient = {
   startInspection(id) {
     inspectedIdExecutor.resolve(id);
-
-    getOrCreatePartInspectionExecutor(id, 'key').resolve(inspect(executorMocks[id].key));
-    getOrCreatePartInspectionExecutor(id, 'value').resolve(inspect(executorMocks[id].value));
-    getOrCreatePartInspectionExecutor(id, 'reason').resolve(inspect(executorMocks[id].reason));
-    getOrCreatePartInspectionExecutor(id, 'plugins').resolve(inspect(executorMocks[id].plugins));
-    getOrCreatePartInspectionExecutor(id, 'annotations').resolve(inspect(executorMocks[id].annotations));
+    sendMessage({ type: 'inspection_started', payload: { id } });
   },
-
-  retryExecutor(id) {},
-
-  invalidateExecutor(id) {},
-
+  retryExecutor(id) {
+    sendMessage({ type: 'retry_executor', payload: { id } });
+  },
+  invalidateExecutor(id) {
+    sendMessage({ type: 'invalidate_executor', payload: { id } });
+  },
   expandInspection(id, part, path) {
-    const inspectionExecutor = getOrCreatePartInspectionExecutor(id, part);
-
-    let inspection = inspectionExecutor.get();
-    if (inspection === null) {
-      return;
-    }
-    for (const index of path) {
-      inspection = inspection.children![index];
-    }
-
-    inspection.children = inspect(inspection[INSPECTED_VALUE]).children;
-
-    inspectionExecutor.resolve(inspectionExecutor.get());
+    sendMessage({ type: 'inspection_expanded', payload: { id, part, path } });
   },
 };
+
+sendMessage({ type: 'devtools_panel_opened' });
 
 ReactDOM.createRoot(document.getElementById('container')!).render(
   <ExecutorManagerProvider value={executorManager}>

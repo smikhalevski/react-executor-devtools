@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
 import React from 'react';
-import type { Stats } from '../../content/types';
+import type { Stats } from '../../types';
 import { DefaultIcon } from '../../gen/icons/DefaultIcon';
 import { InvalidatedIcon } from '../../gen/icons/InvalidatedIcon';
 import { SpinnerIcon } from '../../gen/icons/SpinnerIcon';

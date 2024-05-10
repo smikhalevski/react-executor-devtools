@@ -1,6 +1,6 @@
 import { type Executor, ExecutorManager, useExecutorSubscription } from 'react-executor';
 import detachDeactivated from 'react-executor/plugin/detachDeactivated';
-import type { InspectionPart, Inspection, SuperficialInfo } from '../content/types';
+import type { InspectionPart, Inspection, SuperficialInfo } from '../types';
 
 export const executorManager = new ExecutorManager();
 

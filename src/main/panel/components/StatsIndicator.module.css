@@ -9,16 +9,16 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 15px;
-    height: 15px;
+    width: 14px;
+    height: 14px;
     position: relative;
     vertical-align: top;
 }
 
 .Icon {
     position: absolute;
-    width: 15px;
-    height: 15px;
+    width: 14px;
+    height: 14px;
 }
 
 .SpinnerIcon {

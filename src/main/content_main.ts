@@ -1,5 +1,5 @@
 import type { Executor, ExecutorPlugin } from 'react-executor';
-import { describeValue, inspect } from './inspect';
+import { describeValue, inspect, type InspectOptions } from './inspect';
 import {
   type ContentMessage,
   INSPECTED_VALUE,
@@ -31,18 +31,33 @@ const contentState: ContentState = {
   executorInfos: new Map(),
 };
 
+const inspectOptions: InspectOptions = {
+  preprocessor: inspection => {
+    const ex = inspection[INSPECTED_VALUE];
+
+    const x = Array.from(contentState.executorInfos.values()).find(x => x.executor === ex);
+
+    if (x !== undefined) {
+      inspection.annotations = { isExecutor: true };
+    }
+  },
+};
+
 window.addEventListener('message', event => {
-  if (event.data?.source === 'react_executor_devtools') {
+  if (event.data?.source === 'react_executor_devtools_panel') {
     receiveMessage(event.data);
   }
 });
 
 function sendMessage(message: ContentMessage): void {
-  (message as any).source = 'react_executor_devtools';
+  (message as any).source = 'react_executor_devtools_content';
+  console.log('content_main/sendMessage', message);
   window.postMessage(message, '*');
 }
 
 function receiveMessage(message: PanelMessage): void {
+  console.log('content_main/receiveMessage', message);
+
   switch (message.type) {
     case 'devtools_panel_opened':
       contentState.isConnected = true;
@@ -70,6 +85,7 @@ function receiveMessage(message: PanelMessage): void {
 
       contentState.inspectableInfo = inspectableInfo;
 
+      sendMessage({ type: 'key_changed', payload: { id, inspection: inspectableInfo.keyInspection } });
       sendMessage({ type: 'value_changed', payload: { id, inspection: inspectableInfo.valueInspection } });
       sendMessage({ type: 'reason_changed', payload: { id, inspection: inspectableInfo.reasonInspection } });
       sendMessage({ type: 'plugins_changed', payload: { id, inspection: inspectableInfo.pluginsInspection } });
@@ -112,11 +128,12 @@ function receiveMessage(message: PanelMessage): void {
           break;
       }
 
+      let childInspection = inspection;
       for (const index of path) {
-        inspection = inspection.children![index];
+        childInspection = childInspection.children![index];
       }
 
-      inspection.children = inspect(inspection[INSPECTED_VALUE]).children;
+      childInspection.children = inspect(childInspection[INSPECTED_VALUE], 1, inspectOptions).children;
 
       sendMessage({ type: `${part}_changed`, payload: { id: inspectableInfo.id, inspection } });
       break;
@@ -138,10 +155,6 @@ const plugin: ExecutorPlugin = executor => {
   const plugins: { [key: string]: unknown } = {};
 
   executor.subscribe(event => {
-    if (!contentState.isConnected) {
-      return;
-    }
-
     switch (event.type) {
       case 'fulfilled':
       case 'rejected':
@@ -151,7 +164,7 @@ const plugin: ExecutorPlugin = executor => {
       case 'invalidated':
       case 'activated':
       case 'deactivated':
-        if (contentState.executorInfos.has(id)) {
+        if (contentState.executorInfos.has(id) && contentState.isConnected) {
           sendMessage({ type: 'stats_changed', payload: { id, stats: getStats(executor) } });
         }
         break;
@@ -162,7 +175,10 @@ const plugin: ExecutorPlugin = executor => {
 
       case 'attached':
         contentState.executorInfos.set(id, { executor, plugins });
-        sendMessage({ type: 'executor_attached', payload: getSuperficialInfo(id, executor) });
+
+        if (contentState.isConnected) {
+          sendMessage({ type: 'executor_attached', payload: getSuperficialInfo(id, executor) });
+        }
         break;
 
       case 'detached':
@@ -171,34 +187,42 @@ const plugin: ExecutorPlugin = executor => {
         if (contentState.inspectableInfo?.id === id) {
           contentState.inspectableInfo = null;
         }
-        sendMessage({ type: 'executor_detached', payload: { id } });
+        if (contentState.isConnected) {
+          sendMessage({ type: 'executor_detached', payload: { id } });
+        }
         break;
     }
 
-    if (contentState.inspectableInfo?.id !== id) {
+    if (!contentState.isConnected || contentState.inspectableInfo?.id !== id) {
       return;
     }
 
     switch (event.type) {
       case 'fulfilled':
-        sendMessage({ type: 'value_changed', payload: { id, inspection: inspect(executor.value) } });
+        sendMessage({ type: 'value_changed', payload: { id, inspection: inspect(executor.value, 1, inspectOptions) } });
         break;
 
       case 'rejected':
-        sendMessage({ type: 'reason_changed', payload: { id, inspection: inspect(executor.reason) } });
+        sendMessage({
+          type: 'reason_changed',
+          payload: { id, inspection: inspect(executor.reason, 1, inspectOptions) },
+        });
         break;
 
       case 'cleared':
-        sendMessage({ type: 'value_changed', payload: { id, inspection: inspect(executor.value) } });
-        sendMessage({ type: 'reason_changed', payload: { id, inspection: inspect(executor.reason) } });
+        sendMessage({ type: 'value_changed', payload: { id, inspection: inspect(executor.value, 1, inspectOptions) } });
+        sendMessage({
+          type: 'reason_changed',
+          payload: { id, inspection: inspect(executor.reason, 1, inspectOptions) },
+        });
         break;
 
       case 'plugin_configured':
-        sendMessage({ type: 'plugins_changed', payload: { id, inspection: inspect(plugins) } });
+        sendMessage({ type: 'plugins_changed', payload: { id, inspection: inspect(plugins, 1, inspectOptions) } });
         break;
 
       case 'annotated':
-        // sendMessage({ type: 'annotations_changed', payload: { id, inspection: inspect(executor.annotations) } });
+        // sendMessage({ type: 'annotations_changed', payload: { id, inspection: inspect(executor.annotations, 1, inspectOptions) } });
         break;
     }
   });
@@ -218,12 +242,12 @@ function getSuperficialInfo(id: string, executor: Executor): SuperficialInfo {
 function getInspectableInfo(id: string, executor: Executor, plugins: { [key: string]: unknown }): InspectableInfo {
   return {
     id,
-    keyInspection: inspect(executor.key),
-    valueInspection: inspect(executor.value),
-    reasonInspection: inspect(executor.reason),
-    annotationsInspection: inspect({}),
-    // annotationsInspection: inspect(executor.annotations),
-    pluginsInspection: inspect(plugins),
+    keyInspection: inspect(executor.key, 1, inspectOptions),
+    valueInspection: inspect(executor.value, 1, inspectOptions),
+    reasonInspection: inspect(executor.reason, 1, inspectOptions),
+    annotationsInspection: inspect({}, 1, inspectOptions),
+    // annotationsInspection: inspect(executor.annotations, 1, inspectOptions),
+    pluginsInspection: inspect(plugins, 1, inspectOptions),
   };
 }
 

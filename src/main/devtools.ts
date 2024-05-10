@@ -1,1 +1,1 @@
-chrome.devtools.panels.create('Executors', 'icon.png', 'panel.html', () => {});
+chrome.devtools.panels.create('Executors', 'icon.png', 'index.html', () => {});

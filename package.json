@@ -7,8 +7,10 @@
   "types": "./index.d.ts",
   "sideEffects": false,
   "scripts": {
-    "build": "mkdir -p build && cp LICENSE.txt src/main/devtools.html src/main/manifest.json src/main/panel/panel.html build/ && rollup --config --watch",
+    "build": "npm run build:icons && npm run build:panel && npm run build:devtools",
     "build:icons": "svgr src/main/icons",
+    "build:panel": "vite build",
+    "build:devtools": "mkdir -p build && cp LICENSE.txt src/main/devtools.html src/main/manifest.json build/ && rollup --config",
     "start": "vite",
     "clean": "rimraf src/main/gen build coverage",
     "test": "jest"

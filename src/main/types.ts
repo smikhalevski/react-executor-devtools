@@ -25,6 +25,8 @@ export interface Inspection {
    * The array of child property inspections, or `undefined` if there are no children, or they weren't inspected.
    */
   children?: Inspection[];
+
+  annotations?: { [key: string]: any };
 }
 
 export interface Stats {

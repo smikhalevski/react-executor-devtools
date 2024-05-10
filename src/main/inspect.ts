@@ -10,6 +10,14 @@ export interface InspectOptions {
    * The maximum length of the string preview.
    */
   maxStringLength?: number;
+
+  /**
+   * Receives an inspection object before it receives its children.
+   *
+   * @param inspection The inspection to be preprocessed.
+   * @returns `false` if children must not be processed.
+   */
+  preprocessor?: (inspection: Inspection) => boolean | void;
 }
 /**
  * Inspects the given value and values in its properties.
@@ -29,11 +37,25 @@ export function inspect(value: unknown, depth = 1, options: InspectOptions = {})
     value instanceof Symbol ||
     value instanceof BigInt
   ) {
-    return {
+    const inspection: Inspection = {
       [INSPECTED_VALUE]: value,
       keyDescription: undefined,
-      valueDescription: describeValue(value, 0, options),
+      valueDescription: describeValue(value, 1, options),
     };
+
+    options.preprocessor?.(inspection);
+
+    return inspection;
+  }
+
+  const inspection: Inspection = {
+    [INSPECTED_VALUE]: value,
+    keyDescription: undefined,
+    valueDescription: describeValue(value, 1, options),
+  };
+
+  if (options.preprocessor?.(inspection) === false) {
+    return inspection;
   }
 
   let hasChildren: boolean | undefined;
@@ -72,13 +94,10 @@ export function inspect(value: unknown, depth = 1, options: InspectOptions = {})
     }
   }
 
-  return {
-    [INSPECTED_VALUE]: value,
-    keyDescription: undefined,
-    valueDescription: describeValue(value, 1, options),
-    hasChildren,
-    children,
-  };
+  inspection.hasChildren = hasChildren;
+  inspection.children = children;
+
+  return inspection;
 }
 
 export function inspectKey(key: PropertyKey): string {
@@ -141,7 +160,7 @@ export function describeValue(value: unknown, depth: number = 2, options: Inspec
   }
 
   if (typeof value === 'function') {
-    return depth < 2 ? 'ƒ' : value.name.length === 0 ? 'ƒ ()' : 'ƒ ' + value.name + '()';
+    return depth === 0 ? 'ƒ' : value.name.length === 0 ? 'ƒ ()' : 'ƒ ' + value.name + '()';
   }
 
   let label = getConstructorName(value);
@@ -299,10 +318,24 @@ function getConstructorName(value: object): string | undefined {
 }
 
 function inspectString(value: string | String, maxLength: number): string {
-  const str = JSON.stringify(value).replace(/\\\\/g, '\\');
+  const str = value.valueOf().replace(escapeCharsRe, escapeCharReplacer);
 
-  return str.length > maxLength + 2 ? ellipsis(str, maxLength) + '"' : str;
+  return "'" + (str.length > maxLength ? ellipsis(str, maxLength) : str) + "'";
 }
+
+const escapeCharReplacer = (char: string) => escapedChars[char];
+
+const escapeCharsRe = /['\\\b\f\n\r\t]/g;
+
+const escapedChars: { [char: string]: string } = {
+  "'": "\\'",
+  '\\': '\\\\',
+  '\b': '\\b',
+  '\f': '\\f',
+  '\n': '\\n',
+  '\r': '\\r',
+  '\t': '\\t',
+};
 
 /**
  * Adds ellipsis to the string after the given length.
