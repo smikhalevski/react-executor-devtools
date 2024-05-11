@@ -39,8 +39,8 @@ export function inspect(value: unknown, depth = 1, options: InspectOptions = {})
   ) {
     const inspection: Inspection = {
       [INSPECTED_VALUE]: value,
-      keyDescription: undefined,
-      valueDescription: describeValue(value, 3, options),
+      keyPreview: undefined,
+      valuePreview: getValuePreview(value, 3, options),
     };
 
     options.preprocessor?.(inspection);
@@ -50,8 +50,8 @@ export function inspect(value: unknown, depth = 1, options: InspectOptions = {})
 
   const inspection: Inspection = {
     [INSPECTED_VALUE]: value,
-    keyDescription: undefined,
-    valueDescription: describeValue(value, 1, options),
+    keyPreview: undefined,
+    valuePreview: getValuePreview(value, 1, options),
   };
 
   if (options.preprocessor?.(inspection) === false) {
@@ -72,7 +72,7 @@ export function inspect(value: unknown, depth = 1, options: InspectOptions = {})
         }
         children ||= [];
         child = inspect(item, depth - 1, options);
-        child.keyDescription = inspectKey(children.length);
+        child.keyPreview = getKeyPreview(children.length);
         children.push(child);
       }
     } catch {
@@ -100,7 +100,7 @@ export function inspect(value: unknown, depth = 1, options: InspectOptions = {})
       }
       children ||= [];
       child = inspect(value[key as keyof object], depth - 1, options);
-      child.keyDescription = inspectKey(key);
+      child.keyPreview = getKeyPreview(key);
       children.push(child);
     }
   }
@@ -111,7 +111,7 @@ export function inspect(value: unknown, depth = 1, options: InspectOptions = {})
   return inspection;
 }
 
-export function inspectKey(key: PropertyKey): string {
+export function getKeyPreview(key: PropertyKey): string {
   return key.toString();
 }
 
@@ -142,7 +142,7 @@ export function inspectKey(key: PropertyKey): string {
  * - If 2 then children are inspected and included in preview.
  * @param options Additional options.
  */
-export function describeValue(value: unknown, depth: number = 2, options: InspectOptions = {}): string {
+export function getValuePreview(value: unknown, depth: number = 2, options: InspectOptions = {}): string {
   const { maxProperties = 5, maxStringLength = 200 } = options;
 
   let str = '';
@@ -159,7 +159,7 @@ export function describeValue(value: unknown, depth: number = 2, options: Inspec
   }
 
   if (typeof value === 'string' || value instanceof String) {
-    return inspectString(value, maxStringLength);
+    return getStringPreview(value, maxStringLength);
   }
 
   if (typeof value === 'symbol' || value instanceof Symbol) {
@@ -182,7 +182,7 @@ export function describeValue(value: unknown, depth: number = 2, options: Inspec
       label += label !== value.name ? '(' + value.name + ')' : '';
     }
     if (depth > 1) {
-      label += value.message !== '' ? ' {' + inspectString(value.message, maxStringLength) + '}' : '';
+      label += value.message !== '' ? ' {' + getStringPreview(value.message, maxStringLength) + '}' : '';
     }
     return label!;
   }
@@ -206,7 +206,7 @@ export function describeValue(value: unknown, depth: number = 2, options: Inspec
         str += '…';
         break;
       }
-      str += describeValue(value[index++], depth - 1, options);
+      str += getValuePreview(value[index++], depth - 1, options);
     }
 
     return (label !== undefined ? label + ' ' : '') + '[' + str + ']';
@@ -231,7 +231,7 @@ export function describeValue(value: unknown, depth: number = 2, options: Inspec
         str += '…';
         break;
       }
-      str += describeValue(item, depth - 1, options);
+      str += getValuePreview(item, depth - 1, options);
     }
 
     return label + ' {' + str + '}';
@@ -252,7 +252,7 @@ export function describeValue(value: unknown, depth: number = 2, options: Inspec
         str += '…';
         break;
       }
-      str += describeValue(entry[0], depth - 1, options) + ' => ' + describeValue(entry[1], depth - 1, options);
+      str += getValuePreview(entry[0], depth - 1, options) + ' => ' + getValuePreview(entry[1], depth - 1, options);
     }
 
     return label + ' {' + str + '}';
@@ -275,7 +275,7 @@ export function describeValue(value: unknown, depth: number = 2, options: Inspec
           str += '…';
           break;
         }
-        str += describeValue(item, depth - 1, options);
+        str += getValuePreview(item, depth - 1, options);
       }
     } catch {
       // noop
@@ -295,7 +295,7 @@ export function describeValue(value: unknown, depth: number = 2, options: Inspec
         str += '…';
         break;
       }
-      str += key.toString() + ': ' + describeValue(value[key as keyof object], depth - 1, options);
+      str += key.toString() + ': ' + getValuePreview(value[key as keyof object], depth - 1, options);
     }
   }
 
@@ -334,7 +334,7 @@ function getConstructorName(value: object): string | undefined {
   return name;
 }
 
-function inspectString(value: string | String, maxLength: number): string {
+function getStringPreview(value: string | String, maxLength: number): string {
   const str = value.valueOf().replace(escapeCharsRe, escapeCharReplacer);
 
   return "'" + (str.length > maxLength ? ellipsis(str, maxLength) : str) + "'";

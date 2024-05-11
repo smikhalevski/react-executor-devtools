@@ -1,13 +1,13 @@
 import { clsx } from 'clsx';
 import React from 'react';
-import type { Stats } from '../../types';
+import type { ExecutorStats } from '../../types';
 import { DefaultIcon } from '../../gen/icons/DefaultIcon';
 import { InvalidatedIcon } from '../../gen/icons/InvalidatedIcon';
 import { SpinnerIcon } from '../../gen/icons/SpinnerIcon';
 import css from './StatsIndicator.module.css';
 
 interface StatsIndicatorProps {
-  stats: Stats;
+  stats: ExecutorStats;
 }
 
 export const StatsIndicator = ({ stats }: StatsIndicatorProps) => {

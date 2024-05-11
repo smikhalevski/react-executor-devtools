@@ -2,14 +2,15 @@ import './index.css';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { ExecutorManagerProvider } from 'react-executor';
-import type { ContentMessage, PanelMessage } from '../types';
+import type { ContentMessage, ExecutorPart, PanelMessage } from '../types';
+import { log } from '../utils';
 import { App } from './App';
 import {
   executorManager,
-  getOrCreatePartInspectionExecutor,
-  getOrCreateSuperficialInfoExecutor,
-  idsExecutor,
-  inspectedIdExecutor,
+  getDetailsExecutor,
+  getPartInspectionExecutor,
+  inspectorExecutor,
+  listExecutor,
 } from './executors';
 import { type ContentClient, ContentClientProvider } from './useContentClient';
 
@@ -20,72 +21,91 @@ chrome.runtime.onMessage.addListener((message, sender) => {
 });
 
 window.addEventListener('beforeunload', () => {
-  sendMessage({ type: 'devtools_panel_closed' });
+  sendMessage({ type: 'panel_closed' });
 });
 
 function sendMessage(message: PanelMessage): void {
-  (message as any).source = 'react_executor_devtools_panel';
-  console.log('panel/sendMessage', message);
-
   if (chrome.runtime.id !== undefined) {
+    (message as any).source = 'react_executor_devtools_panel';
+
+    log('panel', message);
     chrome.tabs.sendMessage(chrome.devtools.inspectedWindow.tabId, message);
   }
 }
 
 function receiveMessage(message: ContentMessage): void {
-  console.log('panel/receiveMessage', message);
+  log('content_main', message);
+
   switch (message.type) {
-    case 'executor_attached':
-      if (idsExecutor.get().find(x => x.id === message.payload.id)) {
+    case 'executor_attached': {
+      const list = listExecutor.get();
+
+      if (list.some(item => item.id === message.id)) {
+        // Already exists
         break;
       }
-      idsExecutor.resolve(idsExecutor.get().concat({ origin: message.payload.origin, id: message.payload.id }));
-      getOrCreateSuperficialInfoExecutor(message.payload.id).resolve(message.payload);
+
+      list.push({ id: message.id, originId: message.details.originId });
+      listExecutor.resolve(list);
+
+      getDetailsExecutor(message.id).resolve(message.details);
       break;
+    }
 
-    case 'executor_detached':
-      const ids = idsExecutor.get();
-      const index = ids.findIndex(x => x.id === message.payload.id);
+    case 'executor_detached': {
+      const list = listExecutor.get();
+      const index = list.findIndex(item => item.id === message.id);
 
-      if (inspectedIdExecutor.value === message.payload.id) {
-        inspectedIdExecutor.resolve(null);
+      if (inspectorExecutor.value?.id === message.id) {
+        inspectorExecutor.resolve(null);
       }
       if (index !== -1) {
-        ids.splice(index, 1);
-        idsExecutor.resolve(ids);
+        list.splice(index, 1);
+        listExecutor.resolve(list);
       }
       break;
+    }
 
-    case 'stats_changed':
-      const superficialInfoExecutor = getOrCreateSuperficialInfoExecutor(message.payload.id);
-      Object.assign(superficialInfoExecutor.value!.stats, message.payload.stats);
-      superficialInfoExecutor.resolve(superficialInfoExecutor.value!);
+    case 'executor_state_changed': {
+      const detailsExecutor = getDetailsExecutor(message.id);
+      const details = detailsExecutor.get();
+
+      Object.assign(details.stats, message.stats);
+
+      detailsExecutor.resolve(details);
       break;
+    }
 
-    case 'key_changed':
-    case 'value_changed':
-    case 'reason_changed':
-    case 'task_changed':
-    case 'plugins_changed':
-    case 'annotations_changed':
-      if (inspectedIdExecutor.value !== message.payload.id) {
+    case 'executor_patched': {
+      if (inspectorExecutor.value?.id !== message.id) {
         break;
       }
-      const partForEventType = {
-        key_changed: 'key',
-        value_changed: 'value',
-        reason_changed: 'reason',
-        task_changed: 'task',
-        plugins_changed: 'plugins',
-        annotations_changed: 'annotations',
-      } as const;
+      for (const part in message.patch) {
+        const inspection = message.patch[part as ExecutorPart];
 
-      getOrCreatePartInspectionExecutor(message.payload.id, partForEventType[message.type]).resolve(
-        message.payload.inspection
-      );
+        if (inspection !== undefined) {
+          getPartInspectionExecutor(message.id, part as ExecutorPart).resolve(inspection);
+        }
+      }
+      break;
+    }
+
+    case 'content_opened':
+      sendMessage({ type: 'panel_opened' });
       break;
 
-    case 'go_to_definition_source':
+    case 'content_closed': {
+      const inspector = inspectorExecutor.get();
+      const list = listExecutor.get().filter(item => item.originId !== message.originId);
+
+      if (inspector !== null && list.every(item => item.id !== inspector.id)) {
+        inspectorExecutor.resolve(null);
+      }
+      listExecutor.resolve(list);
+      break;
+    }
+
+    case 'go_to_inspected_value':
       chrome.devtools.inspectedWindow.eval(
         `
         if (__REACT_EXECUTOR_DEVTOOLS__.inspectedValue !== undefined) {
@@ -93,54 +113,41 @@ function receiveMessage(message: ContentMessage): void {
           __REACT_EXECUTOR_DEVTOOLS__.inspectedValue = undefined;
         }
       `,
-        { frameURL: message.payload.url }
+        { frameURL: message.url }
       );
       break;
-
-    case 'devtools_content_opened':
-      sendMessage({ type: 'devtools_panel_opened' });
-      break;
-
-    case 'devtools_content_closed': {
-      const ids = idsExecutor.get().filter(x => x.origin !== message.payload.origin);
-
-      if (
-        inspectedIdExecutor.value !== null &&
-        inspectedIdExecutor.value !== undefined &&
-        ids.every(x => x.id !== inspectedIdExecutor.value)
-      ) {
-        inspectedIdExecutor.resolve(null);
-      }
-
-      idsExecutor.resolve(ids);
-      break;
-    }
   }
 }
 
 const contentClient: ContentClient = {
   startInspection(id) {
-    inspectedIdExecutor.resolve(id);
-    sendMessage({ type: 'inspection_started', payload: { id } });
+    inspectorExecutor.resolve({ id });
+
+    sendMessage({ type: 'start_inspection', id });
   },
+
   goToDefinition(id, part, path) {
-    sendMessage({ type: 'go_to_definition', payload: { id, part, path } });
+    sendMessage({ type: 'go_to_part_definition', id, part, path });
   },
+
   retryExecutor(id) {
-    sendMessage({ type: 'retry_executor', payload: { id } });
+    sendMessage({ type: 'retry_executor', id });
   },
+
   invalidateExecutor(id) {
-    sendMessage({ type: 'invalidate_executor', payload: { id } });
+    sendMessage({ type: 'invalidate_executor', id });
   },
+
   abortExecutor(id) {
-    sendMessage({ type: 'abort_executor', payload: { id } });
+    sendMessage({ type: 'abort_executor', id });
   },
-  expandInspection(id, part, path) {
-    sendMessage({ type: 'inspection_expanded', payload: { id, part, path } });
+
+  inspectChildren(id, part, path) {
+    sendMessage({ type: 'inspect_children', id, part, path });
   },
 };
 
-sendMessage({ type: 'devtools_panel_opened' });
+sendMessage({ type: 'panel_opened' });
 
 ReactDOM.createRoot(document.getElementById('container')!).render(
   <ExecutorManagerProvider value={executorManager}>

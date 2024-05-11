@@ -1,42 +1,48 @@
 import { type Executor, ExecutorManager, useExecutorSubscription } from 'react-executor';
 import detachDeactivated from 'react-executor/plugin/detachDeactivated';
-import type { InspectionPart, Inspection, SuperficialInfo } from '../types';
+import type { ExecutorDetails, ExecutorPart, Inspection } from '../types';
+
+interface Inspector {
+  id: string;
+}
+
+interface ListItem {
+  id: string;
+  originId: string;
+}
 
 export const executorManager = new ExecutorManager();
 
-export const inspectedIdExecutor = executorManager.getOrCreate<string | null>('inspected_id', null);
+export const listExecutor = executorManager.getOrCreate<ListItem[]>('list', []);
 
-export const idsExecutor = executorManager.getOrCreate<Array<{ origin: string; id: string }>>('ids', []);
+export const inspectorExecutor = executorManager.getOrCreate<Inspector | null>('inspector', null);
 
-export function getOrCreateSuperficialInfoExecutor(
-  id: string,
-  initialValue?: SuperficialInfo
-): Executor<SuperficialInfo> {
-  return executorManager.getOrCreate(`superficial_info_${id}`, initialValue, [detachDeactivated(0)]);
+export function getDetailsExecutor(id: string): Executor<ExecutorDetails> {
+  return executorManager.getOrCreate('details' + id, undefined, [detachDeactivated(0)]);
 }
 
-export function getOrCreatePartInspectionExecutor(id: string, part: InspectionPart): Executor<Inspection | null> {
-  return executorManager.getOrCreate<Inspection | null>(`inspection_${id}_${part}`, null, [detachDeactivated(0)]);
+export function getPartInspectionExecutor(id: string, part: ExecutorPart): Executor<Inspection | null> {
+  return executorManager.getOrCreate<Inspection | null>('inspection' + id + part, null, [detachDeactivated(0)]);
 }
 
-export function useInspectedId(): string | null {
-  useExecutorSubscription(inspectedIdExecutor);
-  return inspectedIdExecutor.get();
+export function useInspector(): Inspector | null {
+  useExecutorSubscription(inspectorExecutor);
+  return inspectorExecutor.get();
 }
 
-export function useIds(): Array<{ origin: string; id: string }> {
-  useExecutorSubscription(idsExecutor);
-  return idsExecutor.get();
+export function useList(): ListItem[] {
+  useExecutorSubscription(listExecutor);
+  return listExecutor.get();
 }
 
-export function useSuperficialInfo(id: string): SuperficialInfo {
-  const executor = getOrCreateSuperficialInfoExecutor(id);
+export function useDetails(id: string): ExecutorDetails {
+  const executor = getDetailsExecutor(id);
   useExecutorSubscription(executor);
   return executor.get();
 }
 
-export function usePartInspection(id: string, part: InspectionPart): Inspection | null {
-  const executor = getOrCreatePartInspectionExecutor(id, part);
+export function usePartInspection(id: string, part: ExecutorPart): Inspection | null {
+  const executor = getPartInspectionExecutor(id, part);
   useExecutorSubscription(executor);
   return executor.get();
 }

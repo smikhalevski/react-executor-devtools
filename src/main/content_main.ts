@@ -1,38 +1,37 @@
 import type { Executor, ExecutorPlugin } from 'react-executor';
-import { describeValue, inspect, type InspectOptions } from './inspect';
+import { inspect, InspectOptions } from './inspect';
 import {
-  type ContentMessage,
+  ContentMessage,
+  ExecutorPart,
+  ExecutorPatch,
+  ExecutorPlugins,
   INSPECTED_VALUE,
-  type Inspection,
-  type InspectionPart,
-  type PanelMessage,
-  type Stats,
-  type SuperficialInfo,
+  Inspection,
+  PanelMessage,
 } from './types';
-import { uuid } from './uuid';
-
-interface InspectableInfo {
-  id: string;
-  keyInspection: Inspection;
-  valueInspection: Inspection;
-  reasonInspection: Inspection;
-  taskInspection: Inspection;
-  annotationsInspection: Inspection;
-  pluginsInspection: Inspection;
-}
+import {
+  getExecutorDetails,
+  getExecutorPartInspections,
+  getExecutorStats,
+  getInspectionChild,
+  log,
+  nextUID,
+} from './utils';
 
 interface ContentState {
-  readonly origin: string;
-  readonly executorInfos: Map<string, { executor: Executor; plugins: { [key: string]: unknown } }>;
+  readonly originId: string;
+  readonly executors: Map<string, { executor: Executor; plugins: ExecutorPlugins }>;
   isConnected: boolean;
-  inspectableInfo: InspectableInfo | null;
+  inspectedId: string | null;
+  inspections: Record<ExecutorPart, Inspection> | null;
 }
 
 const contentState: ContentState = {
-  origin: uuid(),
-  executorInfos: new Map(),
+  originId: nextUID(),
+  executors: new Map(),
   isConnected: false,
-  inspectableInfo: null,
+  inspectedId: null,
+  inspections: null,
 };
 
 const inspectOptions: InspectOptions = {
@@ -40,7 +39,7 @@ const inspectOptions: InspectOptions = {
     const value = inspection[INSPECTED_VALUE];
 
     if (typeof value === 'function') {
-      inspection.annotations = { definition: { type: 'function' } };
+      inspection.location = { type: 'sourceCode' };
       return;
     }
 
@@ -49,9 +48,9 @@ const inspectOptions: InspectOptions = {
     }
 
     // Lookup a matching executor
-    for (const entry of contentState.executorInfos) {
+    for (const entry of contentState.executors) {
       if (entry[1].executor === value) {
-        inspection.annotations = { definition: { type: 'executor', id: entry[0] } };
+        inspection.location = { type: 'executor', id: entry[0] };
         break;
       }
     }
@@ -66,118 +65,97 @@ window.addEventListener('message', event => {
 
 window.addEventListener('beforeunload', () => {
   if (contentState.isConnected) {
-    sendMessage({ type: 'devtools_content_closed', payload: { origin: contentState.origin } });
+    sendMessage({ type: 'content_closed', originId: contentState.originId });
   }
 });
 
 function sendMessage(message: ContentMessage): void {
   (message as any).source = 'react_executor_devtools_content';
-  console.log('content_main/sendMessage', message);
+
+  log('content_main', message);
   window.postMessage(message, '*');
 }
 
 function receiveMessage(message: PanelMessage): void {
-  console.log('content_main/receiveMessage', message);
+  log('panel', message);
 
   switch (message.type) {
-    case 'devtools_panel_opened':
+    case 'panel_opened':
       contentState.isConnected = true;
 
-      for (const entry of contentState.executorInfos) {
-        sendMessage({ type: 'executor_attached', payload: getSuperficialInfo(entry[0], entry[1].executor) });
+      for (const entry of contentState.executors) {
+        const details = getExecutorDetails(contentState.originId, entry[1].executor);
+
+        sendMessage({ type: 'executor_attached', id: entry[0], details });
       }
       break;
 
-    case 'devtools_panel_closed':
+    case 'panel_closed':
       contentState.isConnected = false;
-      contentState.inspectableInfo = null;
+      contentState.inspectedId = contentState.inspections = null;
       break;
 
-    case 'inspection_started': {
-      const { id } = message.payload;
-      const executorInfo = contentState.executorInfos.get(id);
+    case 'start_inspection': {
+      const entry = contentState.executors.get(message.id);
 
-      if (executorInfo === undefined) {
-        break;
+      if (entry !== undefined) {
+        contentState.inspectedId = message.id;
+        contentState.inspections = getExecutorPartInspections(entry.executor, entry.plugins, inspectOptions);
+
+        sendMessage({ type: 'executor_patched', id: message.id, patch: contentState.inspections });
       }
-
-      const inspectableInfo = getInspectableInfo(id, executorInfo.executor, executorInfo.plugins);
-
-      contentState.inspectableInfo = inspectableInfo;
-
-      sendMessage({ type: 'key_changed', payload: { id, inspection: inspectableInfo.keyInspection } });
-      sendMessage({ type: 'value_changed', payload: { id, inspection: inspectableInfo.valueInspection } });
-      sendMessage({ type: 'reason_changed', payload: { id, inspection: inspectableInfo.reasonInspection } });
-      sendMessage({ type: 'task_changed', payload: { id, inspection: inspectableInfo.taskInspection } });
-      sendMessage({ type: 'plugins_changed', payload: { id, inspection: inspectableInfo.pluginsInspection } });
-      sendMessage({
-        type: 'annotations_changed',
-        payload: { id, inspection: inspectableInfo.annotationsInspection },
-      });
       break;
     }
 
-    case 'go_to_definition': {
-      const { inspectableInfo } = contentState;
-
-      if (inspectableInfo?.id !== message.payload.id) {
+    case 'go_to_part_definition': {
+      if (contentState.inspectedId !== message.id || contentState.inspections === null) {
         break;
       }
 
-      let inspection = getInspection(inspectableInfo, message.payload.part);
+      const child = getInspectionChild(contentState.inspections[message.part], message.path, inspectOptions);
 
-      for (const index of message.payload.path) {
-        inspection = inspection.children![index];
+      if (child !== undefined) {
+        window.__REACT_EXECUTOR_DEVTOOLS__.inspectedValue = child[INSPECTED_VALUE];
+
+        sendMessage({ type: 'go_to_inspected_value', url: window.location.href });
       }
-
-      window.__REACT_EXECUTOR_DEVTOOLS__.inspectedValue = inspection[INSPECTED_VALUE];
-
-      sendMessage({ type: 'go_to_definition_source', payload: { url: window.location.href } });
       break;
     }
 
-    case 'inspection_expanded': {
-      const { inspectableInfo } = contentState;
-      const { part, path } = message.payload;
-
-      if (inspectableInfo?.id !== message.payload.id) {
+    case 'inspect_children': {
+      if (contentState.inspectedId !== message.id || contentState.inspections === null) {
         break;
       }
 
-      const inspection = getInspection(inspectableInfo, part);
+      const inspection = contentState.inspections[message.part];
+      const child = getInspectionChild(inspection, message.path, inspectOptions);
 
-      let childInspection = inspection;
-      for (const index of path) {
-        if (childInspection.children === undefined) {
-          break;
-        }
-        childInspection = childInspection.children[index];
+      if (child !== undefined && child.hasChildren && child.children === undefined) {
+        child.children = inspect(child[INSPECTED_VALUE], 1, inspectOptions).children;
+
+        sendMessage({ type: 'executor_patched', id: message.id, patch: { [message.part]: inspection } });
       }
-
-      childInspection.children = inspect(childInspection[INSPECTED_VALUE], 1, inspectOptions).children;
-
-      sendMessage({ type: `${part}_changed`, payload: { id: inspectableInfo.id, inspection } });
       break;
     }
 
     case 'retry_executor':
-      contentState.executorInfos.get(message.payload.id)?.executor.retry();
+      contentState.executors.get(message.id)?.executor.retry();
       break;
 
     case 'invalidate_executor':
-      contentState.executorInfos.get(message.payload.id)?.executor.invalidate();
+      contentState.executors.get(message.id)?.executor.invalidate();
       break;
 
     case 'abort_executor':
-      contentState.executorInfos.get(message.payload.id)?.executor.abort();
+      contentState.executors.get(message.id)?.executor.abort();
       break;
   }
 }
 
 const devtools: ExecutorPlugin = executor => {
-  const id = uuid();
+  const id = nextUID();
 
-  const plugins: { [key: string]: unknown } = {};
+  const plugins: ExecutorPlugins = {};
 
   executor.subscribe(event => {
     switch (event.type) {
@@ -189,8 +167,8 @@ const devtools: ExecutorPlugin = executor => {
       case 'invalidated':
       case 'activated':
       case 'deactivated':
-        if (contentState.executorInfos.has(id) && contentState.isConnected) {
-          sendMessage({ type: 'stats_changed', payload: { id, stats: getStats(executor) } });
+        if (contentState.isConnected && contentState.executors.has(id)) {
+          sendMessage({ type: 'executor_state_changed', id, stats: getExecutorStats(executor) });
         }
         break;
 
@@ -199,158 +177,67 @@ const devtools: ExecutorPlugin = executor => {
         break;
 
       case 'attached':
-        contentState.executorInfos.set(id, { executor, plugins });
+        contentState.executors.set(id, { executor, plugins });
 
         if (contentState.isConnected) {
-          sendMessage({ type: 'executor_attached', payload: getSuperficialInfo(id, executor) });
+          sendMessage({ type: 'executor_attached', id, details: getExecutorDetails(contentState.originId, executor) });
         }
         break;
 
       case 'detached':
-        contentState.executorInfos.delete(id);
+        contentState.executors.delete(id);
 
-        if (contentState.inspectableInfo?.id === id) {
-          contentState.inspectableInfo = null;
+        if (contentState.inspectedId === id) {
+          contentState.inspectedId = contentState.inspections = null;
         }
         if (contentState.isConnected) {
-          sendMessage({ type: 'executor_detached', payload: { id } });
+          sendMessage({ type: 'executor_detached', id });
         }
         break;
     }
 
-    if (!contentState.isConnected || contentState.inspectableInfo?.id !== id) {
+    const { inspections } = contentState;
+
+    if (!contentState.isConnected || contentState.inspectedId !== id || inspections === null) {
       return;
     }
 
+    const patch: ExecutorPatch = {};
+
     switch (event.type) {
       case 'pending':
-        sendMessage({
-          type: 'task_changed',
-          payload: {
-            id,
-            inspection: (contentState.inspectableInfo.taskInspection = inspect(executor.task, 1, inspectOptions)),
-          },
-        });
+        patch.task = inspections.task = inspect(executor.task, 0, inspectOptions);
         break;
 
       case 'fulfilled':
-        sendMessage({
-          type: 'value_changed',
-          payload: {
-            id,
-            inspection: (contentState.inspectableInfo.valueInspection = inspect(executor.value, 1, inspectOptions)),
-          },
-        });
+        patch.value = inspections.value = inspect(executor.value, 1, inspectOptions);
         break;
 
       case 'rejected':
-        sendMessage({
-          type: 'reason_changed',
-          payload: {
-            id,
-            inspection: (contentState.inspectableInfo.reasonInspection = inspect(executor.reason, 1, inspectOptions)),
-          },
-        });
+        patch.reason = inspections.reason = inspect(executor.reason, 0, inspectOptions);
         break;
 
       case 'cleared':
-        sendMessage({
-          type: 'value_changed',
-          payload: {
-            id,
-            inspection: (contentState.inspectableInfo.valueInspection = inspect(executor.value, 1, inspectOptions)),
-          },
-        });
-        sendMessage({
-          type: 'reason_changed',
-          payload: {
-            id,
-            inspection: (contentState.inspectableInfo.reasonInspection = inspect(executor.reason, 1, inspectOptions)),
-          },
-        });
+        patch.value = inspections.value = inspect(executor.value, 0, inspectOptions);
+        patch.reason = inspections.reason = inspect(executor.reason, 0, inspectOptions);
         break;
 
       case 'plugin_configured':
-        sendMessage({
-          type: 'plugins_changed',
-          payload: {
-            id,
-            inspection: (contentState.inspectableInfo.pluginsInspection = inspect(plugins, 1, inspectOptions)),
-          },
-        });
+        patch.plugins = inspections.plugins = inspect(plugins, 1, inspectOptions);
         break;
 
       case 'annotated':
-        sendMessage({
-          type: 'annotations_changed',
-          payload: {
-            id,
-            inspection: (contentState.inspectableInfo.annotationsInspection = inspect(
-              executor.annotations,
-              1,
-              inspectOptions
-            )),
-          },
-        });
+        patch.annotations = inspections.annotations = inspect(executor.annotations, 1, inspectOptions);
         break;
+
+      default:
+        return;
     }
+
+    sendMessage({ type: 'executor_patched', id, patch });
   });
 };
 
 window.__REACT_EXECUTOR_DEVTOOLS__ = { plugin: devtools };
 
-sendMessage({ type: 'devtools_content_opened' });
-
-function getSuperficialInfo(id: string, executor: Executor): SuperficialInfo {
-  return {
-    id,
-    origin: contentState.origin,
-    keyDescription: describeValue(executor.key, 3),
-    stats: getStats(executor),
-  };
-}
-
-function getInspectableInfo(id: string, executor: Executor, plugins: { [key: string]: unknown }): InspectableInfo {
-  return {
-    id,
-    keyInspection: inspect(executor.key, 1, inspectOptions),
-    valueInspection: inspect(executor.value, 1, inspectOptions),
-    reasonInspection: inspect(executor.reason, 1, inspectOptions),
-    taskInspection: inspect(executor.task, 1, inspectOptions),
-    annotationsInspection: inspect(executor.annotations, 1, inspectOptions),
-    pluginsInspection: inspect(plugins, 1, inspectOptions),
-  };
-}
-
-function getStats(executor: Executor): Stats {
-  return {
-    settledAt: executor.settledAt,
-    invalidatedAt: executor.invalidatedAt,
-    isFulfilled: executor.isFulfilled,
-    isPending: executor.isPending,
-    isActive: executor.isActive,
-    hasTask: executor.task !== null,
-  };
-}
-
-function getInspection(inspectableInfo: InspectableInfo, part: InspectionPart): Inspection {
-  switch (part) {
-    case 'key':
-      return inspectableInfo.keyInspection;
-
-    case 'value':
-      return inspectableInfo.valueInspection;
-
-    case 'reason':
-      return inspectableInfo.reasonInspection;
-
-    case 'task':
-      return inspectableInfo.taskInspection;
-
-    case 'annotations':
-      return inspectableInfo.annotationsInspection;
-
-    case 'plugins':
-      return inspectableInfo.pluginsInspection;
-  }
-}
+sendMessage({ type: 'content_opened' });

@@ -1,8 +1,6 @@
-import { noop } from './utils';
-
 window.addEventListener('message', event => {
   if (chrome.runtime.id !== undefined && event.data?.source === 'react_executor_devtools_content') {
-    chrome.runtime.sendMessage(event.data).catch(noop);
+    chrome.runtime.sendMessage(event.data).catch(() => undefined);
   }
 });
 

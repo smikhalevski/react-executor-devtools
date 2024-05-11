@@ -9,12 +9,12 @@ export interface Inspection {
   /**
    * The preview of the inspected value.
    */
-  valueDescription: string;
+  valuePreview: string;
 
   /**
-   * The description of the inspected key under which the inspected value is stored in the parent object.
+   * The preview of the inspected key under which the inspected value is stored in the parent object.
    */
-  keyDescription?: string;
+  keyPreview?: string;
 
   /**
    * `true` if the inspected object has children, or `false` or `undefined` otherwise.
@@ -26,50 +26,66 @@ export interface Inspection {
    */
   children?: Inspection[];
 
-  annotations?: { [key: string]: any };
+  /**
+   * The location of the inspected value to which user can navigate.
+   */
+  location?: Location;
 }
 
-export interface Stats {
+/**
+ * The location of the inspected value to which user can navigate from the inspection.
+ */
+export type Location =
+  | { type: 'executor'; id: string }
+  // The inspected value can be located in source code through the go_to_part_definition event
+  | { type: 'sourceCode' };
+
+export interface ExecutorStats {
   settledAt: number;
   invalidatedAt: number;
   isFulfilled: boolean;
   isPending: boolean;
   isActive: boolean;
+
+  /**
+   * `true` if the executor has a non-`null` task, or `false` otherwise.
+   */
   hasTask: boolean;
 }
 
-export interface SuperficialInfo {
+export interface ExecutorDetails {
   /**
-   * The executor UUID.
+   * The unique ID of the frame where the executor was created.
    */
-  id: string;
-  origin: string;
-  keyDescription: string;
-  stats: Stats;
+  originId: string;
+  keyPreview: string;
+  stats: ExecutorStats;
 }
 
-export type InspectionPart = 'key' | 'value' | 'reason' | 'task' | 'annotations' | 'plugins';
+/**
+ * The part of the executor that is separately updated in the inspector view.
+ */
+export type ExecutorPart = 'key' | 'value' | 'reason' | 'task' | 'annotations' | 'plugins';
+
+export type ExecutorPatch = Partial<Record<ExecutorPart, Inspection>>;
+
+export type ExecutorPlugins = { [key: string]: unknown };
 
 export type PanelMessage =
-  | { type: 'devtools_panel_opened' }
-  | { type: 'devtools_panel_closed' }
-  | { type: 'retry_executor'; payload: { id: string } }
-  | { type: 'invalidate_executor'; payload: { id: string } }
-  | { type: 'abort_executor'; payload: { id: string } }
-  | { type: 'inspection_started'; payload: { id: string } }
-  | { type: 'go_to_definition'; payload: { id: string; part: InspectionPart; path: number[] } }
-  | { type: 'inspection_expanded'; payload: { id: string; part: InspectionPart; path: number[] } };
+  | { type: 'panel_opened' }
+  | { type: 'panel_closed' }
+  | { type: 'start_inspection'; id: string }
+  | { type: 'retry_executor'; id: string }
+  | { type: 'invalidate_executor'; id: string }
+  | { type: 'abort_executor'; id: string }
+  | { type: 'inspect_children'; id: string; part: ExecutorPart; path: number[] }
+  | { type: 'go_to_part_definition'; id: string; part: ExecutorPart; path: number[] };
 
 export type ContentMessage =
-  | { type: 'devtools_content_opened' }
-  | { type: 'devtools_content_closed'; payload: { origin: string } }
-  | { type: 'executor_attached'; payload: SuperficialInfo }
-  | { type: 'executor_detached'; payload: { id: string } }
-  | { type: 'stats_changed'; payload: { id: string; stats: Stats } }
-  | { type: 'key_changed'; payload: { id: string; inspection: Inspection } }
-  | { type: 'value_changed'; payload: { id: string; inspection: Inspection } }
-  | { type: 'reason_changed'; payload: { id: string; inspection: Inspection } }
-  | { type: 'task_changed'; payload: { id: string; inspection: Inspection } }
-  | { type: 'plugins_changed'; payload: { id: string; inspection: Inspection } }
-  | { type: 'annotations_changed'; payload: { id: string; inspection: Inspection } }
-  | { type: 'go_to_definition_source'; payload: { url: string } };
+  | { type: 'content_opened' }
+  | { type: 'content_closed'; originId: string }
+  | { type: 'executor_attached'; id: string; details: ExecutorDetails }
+  | { type: 'executor_detached'; id: string }
+  | { type: 'executor_state_changed'; id: string; stats: ExecutorStats }
+  | { type: 'executor_patched'; id: string; patch: ExecutorPatch }
+  | { type: 'go_to_inspected_value'; url: string };

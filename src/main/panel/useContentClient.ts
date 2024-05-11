@@ -1,10 +1,10 @@
 import { createContext, useContext } from 'react';
-import type { InspectionPart } from '../types';
+import type { ExecutorPart } from '../types';
 
 export interface ContentClient {
   startInspection(id: string): void;
 
-  goToDefinition(id: string, part: InspectionPart, path: number[]): void;
+  goToDefinition(id: string, part: ExecutorPart, path: number[]): void;
 
   retryExecutor(id: string): void;
 
@@ -12,7 +12,7 @@ export interface ContentClient {
 
   abortExecutor(id: string): void;
 
-  expandInspection(id: string, part: InspectionPart, path: number[]): void;
+  inspectChildren(id: string, part: ExecutorPart, path: number[]): void;
 }
 
 const ContentClientContext = createContext<ContentClient | null>(null);

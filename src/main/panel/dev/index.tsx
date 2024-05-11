@@ -2,111 +2,111 @@ import '../index.css';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { ExecutorManagerProvider } from 'react-executor';
-import { describeValue, inspect } from '../../inspect';
+import { getValuePreview, inspect } from '../../inspect';
 import { INSPECTED_VALUE } from '../../types';
-import { uuid } from '../../uuid';
+import { getInspectionChild, nextUID } from '../../utils';
 import { App } from '../App';
 import {
   executorManager,
-  getOrCreatePartInspectionExecutor,
-  getOrCreateSuperficialInfoExecutor,
-  idsExecutor,
-  inspectedIdExecutor,
+  getDetailsExecutor,
+  getPartInspectionExecutor,
+  inspectorExecutor,
+  listExecutor,
 } from '../executors';
-import { userMock } from './mocks';
 import { type ContentClient, ContentClientProvider } from '../useContentClient';
+import { userMock } from './mocks';
 
 interface ExecutorMock {
   key?: unknown;
   value?: unknown;
   reason?: unknown;
-  plugins?: unknown;
-  annotations?: unknown;
   settledAt?: number;
   invalidatedAt?: number;
   isFulfilled?: boolean;
   isPending?: boolean;
   isActive?: boolean;
+  annotations?: unknown;
+  plugins?: unknown;
 }
 
 const executorMocks: { [id: string]: ExecutorMock } = {
-  [uuid()]: {
+  [nextUID()]: {
     key: ['user', 1],
     value: userMock,
+    settledAt: Date.now(),
     isFulfilled: true,
     isActive: true,
-    settledAt: Date.now(),
   },
-  [uuid()]: {
-    key: ['user', 1],
-    value: userMock,
-    isFulfilled: true,
-    isActive: true,
-    invalidatedAt: Date.now(),
-    settledAt: Date.now(),
-  },
-  [uuid()]: {
-    key: ['user', 1],
-    value: userMock,
-    isFulfilled: true,
-    settledAt: Date.now(),
-    isPending: true,
-  },
-  [uuid()]: {
+  [nextUID()]: {
     key: ['user', 2],
     value: userMock,
-    isFulfilled: false,
-    isActive: true,
     settledAt: Date.now(),
     invalidatedAt: Date.now(),
+    isFulfilled: true,
+    isActive: true,
+  },
+  [nextUID()]: {
+    key: ['user', 3],
+    value: userMock,
+    settledAt: Date.now(),
+    isFulfilled: true,
     isPending: true,
   },
-  [uuid()]: {
-    key: 'account',
-    reason: new DOMException('Aborted', 'AbortError'),
-    isFulfilled: false,
+  [nextUID()]: {
+    key: ['user', 4],
+    value: userMock,
     settledAt: Date.now(),
+    invalidatedAt: Date.now(),
+    isFulfilled: false,
+    isPending: true,
+    isActive: true,
   },
-  [uuid()]: {
+  [nextUID()]: {
     key: 'account',
     reason: new DOMException('Aborted', 'AbortError'),
+    settledAt: Date.now(),
+    isFulfilled: false,
   },
-  [uuid()]: {
-    key: 'account',
+  [nextUID()]: {
+    key: 'shoppingCart',
+    reason: new DOMException('Aborted', 'AbortError'),
+  },
+  [nextUID()]: {
+    key: 'order',
     reason: new DOMException('Aborted', 'AbortError'),
     isPending: true,
   },
 };
 
-const contentOrigin = uuid();
+const contentOrigin = nextUID();
 
 for (const [id, executor] of Object.entries(executorMocks)) {
-  getOrCreateSuperficialInfoExecutor(id, {
-    id,
-    keyDescription: describeValue(executor.key),
-    origin: contentOrigin,
+  getDetailsExecutor(id).resolve({
+    originId: contentOrigin,
+    keyPreview: getValuePreview(executor.key),
     stats: {
       settledAt: executor.settledAt || 0,
       invalidatedAt: executor.invalidatedAt || 0,
       isFulfilled: executor.isFulfilled || false,
       isPending: executor.isPending || false,
       isActive: executor.isActive || false,
+      hasTask: false,
     },
   });
 }
 
-idsExecutor.resolve(Object.keys(executorMocks).map(id => ({ origin: contentOrigin, id })));
+listExecutor.resolve(Object.keys(executorMocks).map(id => ({ id, originId: contentOrigin })));
 
 const contentClient: ContentClient = {
   startInspection(id) {
-    inspectedIdExecutor.resolve(id);
+    inspectorExecutor.resolve({ id });
 
-    getOrCreatePartInspectionExecutor(id, 'key').resolve(inspect(executorMocks[id].key));
-    getOrCreatePartInspectionExecutor(id, 'value').resolve(inspect(executorMocks[id].value));
-    getOrCreatePartInspectionExecutor(id, 'reason').resolve(inspect(executorMocks[id].reason));
-    getOrCreatePartInspectionExecutor(id, 'task').resolve(inspect(undefined));
-    getOrCreatePartInspectionExecutor(id, 'plugins').resolve(inspect(executorMocks[id].plugins));
-    getOrCreatePartInspectionExecutor(id, 'annotations').resolve(inspect(executorMocks[id].annotations));
+    getPartInspectionExecutor(id, 'key').resolve(inspect(executorMocks[id].key));
+    getPartInspectionExecutor(id, 'value').resolve(inspect(executorMocks[id].value));
+    getPartInspectionExecutor(id, 'reason').resolve(inspect(executorMocks[id].reason));
+    getPartInspectionExecutor(id, 'task').resolve(inspect(undefined));
+    getPartInspectionExecutor(id, 'plugins').resolve(inspect(executorMocks[id].plugins));
+    getPartInspectionExecutor(id, 'annotations').resolve(inspect(executorMocks[id].annotations));
   },
 
   goToDefinition(id, path, part) {},
@@ -117,20 +117,20 @@ const contentClient: ContentClient = {
 
   abortExecutor(id) {},
 
-  expandInspection(id, part, path) {
-    const inspectionExecutor = getOrCreatePartInspectionExecutor(id, part);
+  inspectChildren(id, part, path) {
+    const inspectionExecutor = getPartInspectionExecutor(id, part);
+    const inspection = inspectionExecutor.get();
 
-    let inspection = inspectionExecutor.get();
     if (inspection === null) {
       return;
     }
-    for (const index of path) {
-      inspection = inspection.children![index];
+
+    const child = getInspectionChild(inspection, path);
+
+    if (child !== undefined) {
+      child.children = inspect(child[INSPECTED_VALUE]).children;
     }
-
-    inspection.children = inspect(inspection[INSPECTED_VALUE]).children;
-
-    inspectionExecutor.resolve(inspectionExecutor.get());
+    inspectionExecutor.resolve(inspection);
   },
 };
 

@@ -1,5 +1,4 @@
 const nodeResolve = require('@rollup/plugin-node-resolve');
-const commonjs = require('@rollup/plugin-commonjs');
 const typescript = require('@rollup/plugin-typescript');
 
 module.exports = ['content', 'content_main'].map(name => ({
@@ -8,6 +7,6 @@ module.exports = ['content', 'content_main'].map(name => ({
     format: 'iife',
     file: `./build/${name}.js`,
   },
-  plugins: [nodeResolve(), commonjs(), typescript({ tsconfig: './tsconfig.build.json' })],
+  plugins: [nodeResolve(), typescript({ tsconfig: './tsconfig.build.json' })],
   preserveSymlinks: true,
 }));
