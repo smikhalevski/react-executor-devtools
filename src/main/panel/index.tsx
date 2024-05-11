@@ -69,20 +69,24 @@ function receiveMessage(message: ContentMessage): void {
     case 'key_changed':
     case 'value_changed':
     case 'reason_changed':
+    case 'task_changed':
     case 'plugins_changed':
     case 'annotations_changed':
       if (inspectedIdExecutor.value !== message.payload.id) {
         break;
       }
-      const part = {
+      const partForEventType = {
         key_changed: 'key',
         value_changed: 'value',
         reason_changed: 'reason',
+        task_changed: 'task',
         plugins_changed: 'plugins',
         annotations_changed: 'annotations',
       } as const;
 
-      getOrCreatePartInspectionExecutor(message.payload.id, part[message.type]).resolve(message.payload.inspection);
+      getOrCreatePartInspectionExecutor(message.payload.id, partForEventType[message.type]).resolve(
+        message.payload.inspection
+      );
       break;
 
     case 'go_to_definition_source':

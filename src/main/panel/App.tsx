@@ -82,6 +82,12 @@ const InspectedInfoView = () => {
         part={'reason'}
       />
       <hr />
+      {'Task'}
+      <PartInspectionViewView
+        inspectedId={inspectedId}
+        part={'task'}
+      />
+      <hr />
       {'Plugins'}
       <PartChildrenInspectionViewView
         inspectedId={inspectedId}
@@ -167,8 +173,7 @@ const PartInspectionViewView = ({ inspectedId, part }: PartInspectionViewProps) 
       onGoToDefinition={(definition, path) => {
         if (definition.type === 'executor') {
           contentClient.startInspection(definition.id);
-        }
-        if (definition.type === 'function') {
+        } else {
           contentClient.goToDefinition(definition.type, part, path);
         }
       }}
@@ -203,8 +208,7 @@ const PartChildrenInspectionViewView = ({ inspectedId, part }: PartChildrenInspe
       onGoToDefinition={(definition, path) => {
         if (definition.type === 'executor') {
           contentClient.startInspection(definition.id);
-        }
-        if (definition.type === 'function') {
+        } else {
           contentClient.goToDefinition(definition.type, part, path);
         }
       }}

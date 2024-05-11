@@ -16,6 +16,7 @@ interface InspectableInfo {
   keyInspection: Inspection;
   valueInspection: Inspection;
   reasonInspection: Inspection;
+  taskInspection: Inspection;
   annotationsInspection: Inspection;
   pluginsInspection: Inspection;
 }
@@ -100,6 +101,7 @@ function receiveMessage(message: PanelMessage): void {
       sendMessage({ type: 'key_changed', payload: { id, inspection: inspectableInfo.keyInspection } });
       sendMessage({ type: 'value_changed', payload: { id, inspection: inspectableInfo.valueInspection } });
       sendMessage({ type: 'reason_changed', payload: { id, inspection: inspectableInfo.reasonInspection } });
+      sendMessage({ type: 'task_changed', payload: { id, inspection: inspectableInfo.taskInspection } });
       sendMessage({ type: 'plugins_changed', payload: { id, inspection: inspectableInfo.pluginsInspection } });
       sendMessage({
         type: 'annotations_changed',
@@ -116,6 +118,9 @@ function receiveMessage(message: PanelMessage): void {
       }
 
       (window as any).__REACT_EXECUTOR_DEVTOOLS__.definition = inspection[INSPECTED_VALUE];
+
+      console.log('inspection =', inspection);
+      console.log('definition =', (window as any).__REACT_EXECUTOR_DEVTOOLS__.definition);
 
       sendMessage({ type: 'go_to_definition_source' });
       break;
@@ -152,7 +157,7 @@ function receiveMessage(message: PanelMessage): void {
   }
 }
 
-const plugin: ExecutorPlugin = executor => {
+const devtools: ExecutorPlugin = executor => {
   const id = uuid();
 
   const plugins: { [key: string]: unknown } = {};
@@ -201,37 +206,81 @@ const plugin: ExecutorPlugin = executor => {
     }
 
     switch (event.type) {
+      case 'pending':
+        sendMessage({
+          type: 'task_changed',
+          payload: {
+            id,
+            inspection: (contentState.inspectableInfo.taskInspection = inspect(executor.task, 1, inspectOptions)),
+          },
+        });
+        break;
+
       case 'fulfilled':
-        sendMessage({ type: 'value_changed', payload: { id, inspection: inspect(executor.value, 1, inspectOptions) } });
+        sendMessage({
+          type: 'value_changed',
+          payload: {
+            id,
+            inspection: (contentState.inspectableInfo.valueInspection = inspect(executor.value, 1, inspectOptions)),
+          },
+        });
         break;
 
       case 'rejected':
         sendMessage({
           type: 'reason_changed',
-          payload: { id, inspection: inspect(executor.reason, 1, inspectOptions) },
+          payload: {
+            id,
+            inspection: (contentState.inspectableInfo.reasonInspection = inspect(executor.reason, 1, inspectOptions)),
+          },
         });
         break;
 
       case 'cleared':
-        sendMessage({ type: 'value_changed', payload: { id, inspection: inspect(executor.value, 1, inspectOptions) } });
+        sendMessage({
+          type: 'value_changed',
+          payload: {
+            id,
+            inspection: (contentState.inspectableInfo.valueInspection = inspect(executor.value, 1, inspectOptions)),
+          },
+        });
         sendMessage({
           type: 'reason_changed',
-          payload: { id, inspection: inspect(executor.reason, 1, inspectOptions) },
+          payload: {
+            id,
+            inspection: (contentState.inspectableInfo.reasonInspection = inspect(executor.reason, 1, inspectOptions)),
+          },
         });
         break;
 
       case 'plugin_configured':
-        sendMessage({ type: 'plugins_changed', payload: { id, inspection: inspect(plugins, 1, inspectOptions) } });
+        sendMessage({
+          type: 'plugins_changed',
+          payload: {
+            id,
+            inspection: (contentState.inspectableInfo.pluginsInspection = inspect(plugins, 1, inspectOptions)),
+          },
+        });
         break;
 
       case 'annotated':
-        // sendMessage({ type: 'annotations_changed', payload: { id, inspection: inspect(executor.annotations, 1, inspectOptions) } });
+        sendMessage({
+          type: 'annotations_changed',
+          payload: {
+            id,
+            inspection: (contentState.inspectableInfo.annotationsInspection = inspect(
+              executor.annotations,
+              1,
+              inspectOptions
+            )),
+          },
+        });
         break;
     }
   });
 };
 
-(window as any).__REACT_EXECUTOR_DEVTOOLS__ = { plugin };
+(window as any).__REACT_EXECUTOR_DEVTOOLS__ = { plugin: devtools };
 
 function getSuperficialInfo(id: string, executor: Executor): SuperficialInfo {
   return {
@@ -248,8 +297,8 @@ function getInspectableInfo(id: string, executor: Executor, plugins: { [key: str
     keyInspection: inspect(executor.key, 1, inspectOptions),
     valueInspection: inspect(executor.value, 1, inspectOptions),
     reasonInspection: inspect(executor.reason, 1, inspectOptions),
-    annotationsInspection: inspect({}, 1, inspectOptions),
-    // annotationsInspection: inspect(executor.annotations, 1, inspectOptions),
+    taskInspection: inspect(executor.task, 1, inspectOptions),
+    annotationsInspection: inspect(executor.annotations, 1, inspectOptions),
     pluginsInspection: inspect(plugins, 1, inspectOptions),
   };
 }
@@ -274,6 +323,9 @@ function getInspection(inspectableInfo: InspectableInfo, part: InspectionPart): 
 
     case 'reason':
       return inspectableInfo.reasonInspection;
+
+    case 'task':
+      return inspectableInfo.taskInspection;
 
     case 'annotations':
       return inspectableInfo.annotationsInspection;

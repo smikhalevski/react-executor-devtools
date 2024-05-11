@@ -40,7 +40,7 @@ export function inspect(value: unknown, depth = 1, options: InspectOptions = {})
     const inspection: Inspection = {
       [INSPECTED_VALUE]: value,
       keyDescription: undefined,
-      valueDescription: describeValue(value, 1, options),
+      valueDescription: describeValue(value, 3, options),
     };
 
     options.preprocessor?.(inspection);
@@ -81,7 +81,18 @@ export function inspect(value: unknown, depth = 1, options: InspectOptions = {})
   }
 
   if (depth !== 0 || !hasChildren) {
-    for (const key of Reflect.ownKeys(value)) {
+    const keys = Reflect.ownKeys(value);
+
+    if (value instanceof Error) {
+      if (keys.indexOf('name') === -1) {
+        keys.push('name');
+      }
+      if (keys.indexOf('message') === -1) {
+        keys.push('message');
+      }
+    }
+
+    for (const key of keys) {
       hasChildren = true;
 
       if (depth === 0) {
@@ -167,7 +178,13 @@ export function describeValue(value: unknown, depth: number = 2, options: Inspec
   let index = 0;
 
   if (value instanceof Error) {
-    return label + '(' + inspectString(value.message, maxStringLength) + ')';
+    if (depth > 0) {
+      label += label !== value.name ? '(' + value.name + ')' : '';
+    }
+    if (depth > 1) {
+      label += value.message !== '' ? ' {' + inspectString(value.message, maxStringLength) + '}' : '';
+    }
+    return label!;
   }
 
   if (isArrayOrTypedArray(value)) {

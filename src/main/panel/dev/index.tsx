@@ -102,11 +102,12 @@ const contentClient: ContentClient = {
     getOrCreatePartInspectionExecutor(id, 'key').resolve(inspect(executorMocks[id].key));
     getOrCreatePartInspectionExecutor(id, 'value').resolve(inspect(executorMocks[id].value));
     getOrCreatePartInspectionExecutor(id, 'reason').resolve(inspect(executorMocks[id].reason));
+    getOrCreatePartInspectionExecutor(id, 'task').resolve(inspect(undefined));
     getOrCreatePartInspectionExecutor(id, 'plugins').resolve(inspect(executorMocks[id].plugins));
     getOrCreatePartInspectionExecutor(id, 'annotations').resolve(inspect(executorMocks[id].annotations));
   },
 
-  goToDefinition(definition) {},
+  goToDefinition(type, path, part) {},
 
   retryExecutor(id) {},
 

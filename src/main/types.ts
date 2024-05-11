@@ -47,7 +47,7 @@ export interface SuperficialInfo {
   stats: Stats;
 }
 
-export type InspectionPart = 'key' | 'value' | 'reason' | 'annotations' | 'plugins';
+export type InspectionPart = 'key' | 'value' | 'reason' | 'task' | 'annotations' | 'plugins';
 
 export type PanelMessage =
   | { type: 'devtools_panel_opened' }
@@ -66,6 +66,7 @@ export type ContentMessage =
   | { type: 'key_changed'; payload: { id: string; inspection: Inspection } }
   | { type: 'value_changed'; payload: { id: string; inspection: Inspection } }
   | { type: 'reason_changed'; payload: { id: string; inspection: Inspection } }
+  | { type: 'task_changed'; payload: { id: string; inspection: Inspection } }
   | { type: 'plugins_changed'; payload: { id: string; inspection: Inspection } }
   | { type: 'annotations_changed'; payload: { id: string; inspection: Inspection } }
   | { type: 'go_to_definition_source' };

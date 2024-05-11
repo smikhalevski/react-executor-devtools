@@ -53,6 +53,26 @@ describe('describeValue', () => {
     expect(describeValue(function aaa() {}, 2)).toBe('ƒ aaa()');
   });
 
+  test('Error', () => {
+    expect(describeValue(new Error(), 0)).toBe('Error');
+    expect(describeValue(new Error(), 1)).toBe('Error');
+
+    expect(describeValue(new Error('aaa'), 0)).toBe('Error');
+    expect(describeValue(new Error('aaa'), 1)).toBe('Error');
+    expect(describeValue(new Error('aaa'), 2)).toBe("Error {'aaa'}");
+
+    class DOMException extends Error {
+      constructor(message?: string) {
+        super(message);
+        this.name = 'AbortError';
+      }
+    }
+
+    expect(describeValue(new DOMException('aaa'), 0)).toBe('DOMException');
+    expect(describeValue(new DOMException('aaa'), 1)).toBe('DOMException(AbortError)');
+    expect(describeValue(new DOMException('aaa'), 2)).toBe("DOMException(AbortError) {'aaa'}");
+  });
+
   describe('array', () => {
     test('Array', () => {
       expect(describeValue([], 0)).toBe('[]');
