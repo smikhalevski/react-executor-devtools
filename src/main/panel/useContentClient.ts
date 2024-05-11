@@ -4,11 +4,13 @@ import type { InspectionPart } from '../types';
 export interface ContentClient {
   startInspection(id: string): void;
 
-  goToDefinition(type: string, part: InspectionPart, path: number[]): void;
+  goToDefinition(id: string, part: InspectionPart, path: number[]): void;
 
   retryExecutor(id: string): void;
 
   invalidateExecutor(id: string): void;
+
+  abortExecutor(id: string): void;
 
   expandInspection(id: string, part: InspectionPart, path: number[]): void;
 }

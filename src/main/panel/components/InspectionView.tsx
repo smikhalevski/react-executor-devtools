@@ -4,6 +4,7 @@ import { ChevronIcon } from '../../gen/icons/ChevronIcon';
 import { DebugIcon } from '../../gen/icons/DebugIcon';
 import { EyeIcon } from '../../gen/icons/EyeIcon';
 import type { Inspection } from '../../types';
+import { useInspectedId } from '../executors';
 import css from './InspectionView.module.css';
 
 export interface InspectionViewProps {
@@ -15,6 +16,7 @@ export interface InspectionViewProps {
 }
 
 export const InspectionView = (props: InspectionViewProps) => {
+  const inspectedId = useInspectedId();
   const { inspection, onExpanded, onGoToDefinition, path = [], indent = 0 } = props;
   const [isExpanded, setExpanded] = useState(false);
   const definition = inspection.annotations?.definition;
@@ -47,15 +49,17 @@ export const InspectionView = (props: InspectionViewProps) => {
         <span className={css.ValueDescription}>
           {definition &&
             (definition?.type === 'executor' ? (
-              <DebugIcon
-                width={14}
-                height={14}
-                style={{ verticalAlign: 'top', cursor: 'pointer' }}
-                onClick={event => {
-                  event.preventDefault();
-                  onGoToDefinition(definition, path);
-                }}
-              />
+              definition.id !== inspectedId && (
+                <DebugIcon
+                  width={14}
+                  height={14}
+                  style={{ verticalAlign: 'top', cursor: 'pointer' }}
+                  onClick={event => {
+                    event.preventDefault();
+                    onGoToDefinition(definition, path);
+                  }}
+                />
+              )
             ) : (
               <EyeIcon
                 width={14}

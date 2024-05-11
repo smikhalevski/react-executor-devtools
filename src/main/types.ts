@@ -35,11 +35,12 @@ export interface Stats {
   isFulfilled: boolean;
   isPending: boolean;
   isActive: boolean;
+  hasTask: boolean;
 }
 
 export interface SuperficialInfo {
   /**
-   * The executor ID that uniquely identifies it in the devtools panel.
+   * The executor UUID.
    */
   id: string;
   origin: string;
@@ -51,15 +52,19 @@ export type InspectionPart = 'key' | 'value' | 'reason' | 'task' | 'annotations'
 
 export type PanelMessage =
   | { type: 'devtools_panel_opened' }
+  | { type: 'devtools_panel_opened_for_origin'; payload: { origin: string } }
   | { type: 'devtools_panel_closed' }
   | { type: 'retry_executor'; payload: { id: string } }
   | { type: 'invalidate_executor'; payload: { id: string } }
+  | { type: 'abort_executor'; payload: { id: string } }
   | { type: 'inspection_started'; payload: { id: string } }
-  | { type: 'go_to_definition'; payload: { type: string; part: InspectionPart; path: number[] } }
+  | { type: 'go_to_definition'; payload: { id: string; part: InspectionPart; path: number[] } }
   | { type: 'inspection_expanded'; payload: { id: string; part: InspectionPart; path: number[] } };
 
 export type ContentMessage =
-  | { type: 'hello'; payload: SuperficialInfo[] }
+  | { type: 'devtools_content_opened'; payload: { origin: string } }
+  | { type: 'devtools_content_closed'; payload: { origin: string } }
+  | { type: 'adopt_existing_executors'; payload: SuperficialInfo[] }
   | { type: 'executor_attached'; payload: SuperficialInfo }
   | { type: 'executor_detached'; payload: { id: string } }
   | { type: 'stats_changed'; payload: { id: string; stats: Stats } }
@@ -69,4 +74,4 @@ export type ContentMessage =
   | { type: 'task_changed'; payload: { id: string; inspection: Inspection } }
   | { type: 'plugins_changed'; payload: { id: string; inspection: Inspection } }
   | { type: 'annotations_changed'; payload: { id: string; inspection: Inspection } }
-  | { type: 'go_to_definition_source' };
+  | { type: 'go_to_definition_source'; payload: { url: string } };

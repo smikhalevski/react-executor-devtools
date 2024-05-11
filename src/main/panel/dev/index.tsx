@@ -78,11 +78,13 @@ const executorMocks: { [id: string]: ExecutorMock } = {
   },
 };
 
+const contentOrigin = uuid();
+
 for (const [id, executor] of Object.entries(executorMocks)) {
   getOrCreateSuperficialInfoExecutor(id, {
     id,
     keyDescription: describeValue(executor.key),
-    origin: window.location.origin,
+    origin: contentOrigin,
     stats: {
       settledAt: executor.settledAt || 0,
       invalidatedAt: executor.invalidatedAt || 0,
@@ -93,7 +95,7 @@ for (const [id, executor] of Object.entries(executorMocks)) {
   });
 }
 
-idsExecutor.resolve(Object.keys(executorMocks));
+idsExecutor.resolve(Object.keys(executorMocks).map(id => ({ origin: contentOrigin, id })));
 
 const contentClient: ContentClient = {
   startInspection(id) {
@@ -107,11 +109,13 @@ const contentClient: ContentClient = {
     getOrCreatePartInspectionExecutor(id, 'annotations').resolve(inspect(executorMocks[id].annotations));
   },
 
-  goToDefinition(type, path, part) {},
+  goToDefinition(id, path, part) {},
 
   retryExecutor(id) {},
 
   invalidateExecutor(id) {},
+
+  abortExecutor(id) {},
 
   expandInspection(id, part, path) {
     const inspectionExecutor = getOrCreatePartInspectionExecutor(id, part);

@@ -2,7 +2,7 @@ const nodeResolve = require('@rollup/plugin-node-resolve');
 const commonjs = require('@rollup/plugin-commonjs');
 const typescript = require('@rollup/plugin-typescript');
 
-module.exports = ['content', 'content_main', 'devtools'].map(name => ({
+module.exports = ['content', 'content_main'].map(name => ({
   input: `./src/main/${name}.ts`,
   output: {
     format: 'iife',

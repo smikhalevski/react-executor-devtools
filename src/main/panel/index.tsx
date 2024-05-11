@@ -14,7 +14,7 @@ import {
 import { type ContentClient, ContentClientProvider } from './useContentClient';
 
 chrome.runtime.onMessage.addListener((message, sender) => {
-  if (sender.id === chrome.runtime.id) {
+  if (sender.id === chrome.runtime.id && sender.tab?.id === chrome.devtools.inspectedWindow.tabId) {
     receiveMessage(message);
   }
 });
@@ -26,30 +26,41 @@ window.addEventListener('beforeunload', () => {
 function sendMessage(message: PanelMessage): void {
   (message as any).source = 'react_executor_devtools_panel';
   console.log('panel/sendMessage', message);
-  chrome.tabs.sendMessage(chrome.devtools.inspectedWindow.tabId, message);
+
+  if (chrome.runtime.id !== undefined) {
+    chrome.tabs.sendMessage(chrome.devtools.inspectedWindow.tabId, message);
+  }
 }
 
 function receiveMessage(message: ContentMessage): void {
   console.log('panel/receiveMessage', message);
   switch (message.type) {
-    case 'hello':
+    case 'adopt_existing_executors': {
+      const ids = idsExecutor.get();
+
       for (const superficialInfo of message.payload) {
+        if (idsExecutor.get().find(x => x.id === superficialInfo.id)) {
+          continue;
+        }
+        ids.push({ origin: superficialInfo.origin, id: superficialInfo.id });
         getOrCreateSuperficialInfoExecutor(superficialInfo.id).resolve(superficialInfo);
       }
-      idsExecutor.resolve(message.payload.map(superficialInfo => superficialInfo.id));
+
+      idsExecutor.resolve(ids);
       break;
+    }
 
     case 'executor_attached':
-      if (idsExecutor.get().includes(message.payload.id)) {
+      if (idsExecutor.get().find(x => x.id === message.payload.id)) {
         break;
       }
-      idsExecutor.resolve(idsExecutor.get().concat(message.payload.id));
+      idsExecutor.resolve(idsExecutor.get().concat({ origin: message.payload.origin, id: message.payload.id }));
       getOrCreateSuperficialInfoExecutor(message.payload.id).resolve(message.payload);
       break;
 
     case 'executor_detached':
       const ids = idsExecutor.get();
-      const index = ids.indexOf(message.payload.id);
+      const index = ids.findIndex(x => x.id === message.payload.id);
 
       if (inspectedIdExecutor.value === message.payload.id) {
         inspectedIdExecutor.resolve(null);
@@ -90,14 +101,35 @@ function receiveMessage(message: ContentMessage): void {
       break;
 
     case 'go_to_definition_source':
-      console.log('NAVIGATING');
-      chrome.devtools.inspectedWindow.eval(`
-        if (__REACT_EXECUTOR_DEVTOOLS__.definition !== undefined) {
-          inspect(__REACT_EXECUTOR_DEVTOOLS__.definition);
-          __REACT_EXECUTOR_DEVTOOLS__.definition = undefined;
+      chrome.devtools.inspectedWindow.eval(
+        `
+        if (__REACT_EXECUTOR_DEVTOOLS__.inspectedValue !== undefined) {
+          inspect(__REACT_EXECUTOR_DEVTOOLS__.inspectedValue);
+          __REACT_EXECUTOR_DEVTOOLS__.inspectedValue = undefined;
         }
-      `);
+      `,
+        { frameURL: message.payload.url }
+      );
       break;
+
+    case 'devtools_content_opened':
+      sendMessage({ type: 'devtools_panel_opened_for_origin', payload: { origin: message.payload.origin } });
+      break;
+
+    case 'devtools_content_closed': {
+      const ids = idsExecutor.get().filter(x => x.origin !== message.payload.origin);
+
+      if (
+        inspectedIdExecutor.value !== null &&
+        inspectedIdExecutor.value !== undefined &&
+        ids.every(x => x.id !== inspectedIdExecutor.value)
+      ) {
+        inspectedIdExecutor.resolve(null);
+      }
+
+      idsExecutor.resolve(ids);
+      break;
+    }
   }
 }
 
@@ -106,14 +138,17 @@ const contentClient: ContentClient = {
     inspectedIdExecutor.resolve(id);
     sendMessage({ type: 'inspection_started', payload: { id } });
   },
-  goToDefinition(type, part, path) {
-    sendMessage({ type: 'go_to_definition', payload: { type, part, path } });
+  goToDefinition(id, part, path) {
+    sendMessage({ type: 'go_to_definition', payload: { id, part, path } });
   },
   retryExecutor(id) {
     sendMessage({ type: 'retry_executor', payload: { id } });
   },
   invalidateExecutor(id) {
     sendMessage({ type: 'invalidate_executor', payload: { id } });
+  },
+  abortExecutor(id) {
+    sendMessage({ type: 'abort_executor', payload: { id } });
   },
   expandInspection(id, part, path) {
     sendMessage({ type: 'inspection_expanded', payload: { id, part, path } });

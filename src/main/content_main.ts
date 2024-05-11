@@ -22,15 +22,17 @@ interface InspectableInfo {
 }
 
 interface ContentState {
+  readonly origin: string;
+  readonly executorInfos: Map<string, { executor: Executor; plugins: { [key: string]: unknown } }>;
   isConnected: boolean;
   inspectableInfo: InspectableInfo | null;
-  executorInfos: Map<string, { executor: Executor; plugins: { [key: string]: unknown } }>;
 }
 
 const contentState: ContentState = {
+  origin: uuid(),
+  executorInfos: new Map(),
   isConnected: false,
   inspectableInfo: null,
-  executorInfos: new Map(),
 };
 
 const inspectOptions: InspectOptions = {
@@ -62,6 +64,12 @@ window.addEventListener('message', event => {
   }
 });
 
+window.addEventListener('beforeunload', () => {
+  if (contentState.isConnected) {
+    sendMessage({ type: 'devtools_content_closed', payload: { origin: contentState.origin } });
+  }
+});
+
 function sendMessage(message: ContentMessage): void {
   (message as any).source = 'react_executor_devtools_content';
   console.log('content_main/sendMessage', message);
@@ -72,13 +80,21 @@ function receiveMessage(message: PanelMessage): void {
   console.log('content_main/receiveMessage', message);
 
   switch (message.type) {
+    case 'devtools_panel_opened_for_origin':
+      if (contentState.isConnected || contentState.origin !== message.payload.origin) {
+        break;
+      }
+    // fallthrough
+
     case 'devtools_panel_opened':
       contentState.isConnected = true;
 
-      sendMessage({
-        type: 'hello',
-        payload: Array.from(contentState.executorInfos).map(entry => getSuperficialInfo(entry[0], entry[1].executor)),
-      });
+      const superficialInfos = Array.from(contentState.executorInfos).map(entry =>
+        getSuperficialInfo(entry[0], entry[1].executor)
+      );
+      if (superficialInfos.length !== 0) {
+        sendMessage({ type: 'adopt_existing_executors', payload: superficialInfos });
+      }
       break;
 
     case 'devtools_panel_closed':
@@ -111,18 +127,21 @@ function receiveMessage(message: PanelMessage): void {
     }
 
     case 'go_to_definition': {
-      let inspection = getInspection(contentState.inspectableInfo!, message.payload.part);
+      const { inspectableInfo } = contentState;
+
+      if (inspectableInfo?.id !== message.payload.id) {
+        break;
+      }
+
+      let inspection = getInspection(inspectableInfo, message.payload.part);
 
       for (const index of message.payload.path) {
         inspection = inspection.children![index];
       }
 
-      (window as any).__REACT_EXECUTOR_DEVTOOLS__.definition = inspection[INSPECTED_VALUE];
+      window.__REACT_EXECUTOR_DEVTOOLS__.inspectedValue = inspection[INSPECTED_VALUE];
 
-      console.log('inspection =', inspection);
-      console.log('definition =', (window as any).__REACT_EXECUTOR_DEVTOOLS__.definition);
-
-      sendMessage({ type: 'go_to_definition_source' });
+      sendMessage({ type: 'go_to_definition_source', payload: { url: window.location.href } });
       break;
     }
 
@@ -138,7 +157,10 @@ function receiveMessage(message: PanelMessage): void {
 
       let childInspection = inspection;
       for (const index of path) {
-        childInspection = childInspection.children![index];
+        if (childInspection.children === undefined) {
+          break;
+        }
+        childInspection = childInspection.children[index];
       }
 
       childInspection.children = inspect(childInspection[INSPECTED_VALUE], 1, inspectOptions).children;
@@ -153,6 +175,10 @@ function receiveMessage(message: PanelMessage): void {
 
     case 'invalidate_executor':
       contentState.executorInfos.get(message.payload.id)?.executor.invalidate();
+      break;
+
+    case 'abort_executor':
+      contentState.executorInfos.get(message.payload.id)?.executor.abort();
       break;
   }
 }
@@ -280,12 +306,14 @@ const devtools: ExecutorPlugin = executor => {
   });
 };
 
-(window as any).__REACT_EXECUTOR_DEVTOOLS__ = { plugin: devtools };
+window.__REACT_EXECUTOR_DEVTOOLS__ = { plugin: devtools };
+
+sendMessage({ type: 'devtools_content_opened', payload: { origin: contentState.origin } });
 
 function getSuperficialInfo(id: string, executor: Executor): SuperficialInfo {
   return {
     id,
-    origin: window.location.origin,
+    origin: contentState.origin,
     keyDescription: describeValue(executor.key, 3),
     stats: getStats(executor),
   };
@@ -310,6 +338,7 @@ function getStats(executor: Executor): Stats {
     isFulfilled: executor.isFulfilled,
     isPending: executor.isPending,
     isActive: executor.isActive,
+    hasTask: executor.task !== null,
   };
 }
 

@@ -1,5 +1,6 @@
 {
   "name": "react-executor-devtools",
+  "version": "0.0.1",
   "private": true,
   "description": "Devtools for React Executor.",
   "main": "./index.js",
@@ -10,7 +11,7 @@
     "build": "npm run build:icons && npm run build:panel && npm run build:devtools",
     "build:icons": "svgr src/main/icons",
     "build:panel": "vite build",
-    "build:devtools": "mkdir -p build && cp LICENSE.txt src/main/devtools.html src/main/manifest.json build/ && rollup --config",
+    "build:devtools": "cp -R src/main/static/ build/ && cp LICENSE.txt build/ && rollup --config",
     "start": "vite",
     "clean": "rimraf src/main/gen build coverage",
     "test": "jest"
@@ -37,7 +38,7 @@
     "@types/react-dom": "^18.3.0",
     "jest": "^29.7.0",
     "prettier": "^3.2.5",
-    "react-executor": "^0.0.7",
+    "react-executor": "^0.0.8",
     "rimraf": "^5.0.5",
     "rollup": "^4.17.2",
     "ts-jest": "^29.1.2",
@@ -48,7 +49,6 @@
   },
   "dependencies": {
     "clsx": "^2.1.1",
-    "parallel-universe": "^6.1.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   }

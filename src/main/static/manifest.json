@@ -1,29 +1,45 @@
 {
+  "manifest_version": 3,
   "name": "React Executor Devtools",
   "description": "Devtools for React Executor.",
   "version": "0.0.1",
-  "manifest_version": 3,
+  "minimum_chrome_version": "102",
+  "icons": {
+    "16": "favicon-16.png",
+    "32": "favicon-32.png",
+    "192": "favicon-192.png"
+  },
   "devtools_page": "devtools.html",
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+  "permissions": [
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "content_scripts": [
     {
       "matches": [
-        "http://*/*",
-        "https://*/*"
+        "<all_urls>"
       ],
       "js": [
         "content.js"
       ],
+      "all_frames": true,
       "run_at": "document_start",
       "world": "ISOLATED"
     },
     {
       "matches": [
-        "http://*/*",
-        "https://*/*"
+        "<all_urls>"
       ],
       "js": [
         "content_main.js"
       ],
+      "all_frames": true,
       "run_at": "document_start",
       "world": "MAIN"
     }

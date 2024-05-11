@@ -6,7 +6,7 @@ export const executorManager = new ExecutorManager();
 
 export const inspectedIdExecutor = executorManager.getOrCreate<string | null>('inspected_id', null);
 
-export const idsExecutor = executorManager.getOrCreate<string[]>('ids', []);
+export const idsExecutor = executorManager.getOrCreate<Array<{ origin: string; id: string }>>('ids', []);
 
 export function getOrCreateSuperficialInfoExecutor(
   id: string,
@@ -24,7 +24,7 @@ export function useInspectedId(): string | null {
   return inspectedIdExecutor.get();
 }
 
-export function useIds(): string[] {
+export function useIds(): Array<{ origin: string; id: string }> {
   useExecutorSubscription(idsExecutor);
   return idsExecutor.get();
 }

@@ -24,8 +24,8 @@ const SuperficialInfoList = () => {
 
   return ids.map(id => (
     <SuperficialInfoListItem
-      id={id}
-      key={id}
+      id={id.id}
+      key={id.id}
     />
   ));
 };
@@ -109,6 +109,7 @@ interface SuperficialInfoViewProps {
 
 const SuperficialInfoView = ({ inspectedId }: SuperficialInfoViewProps) => {
   const superficialInfo = useSuperficialInfo(inspectedId);
+  const contentClient = useContentClient();
 
   const statuses = [];
 
@@ -146,6 +147,16 @@ const SuperficialInfoView = ({ inspectedId }: SuperficialInfoViewProps) => {
         height={14}
       />
       {'Debug'}
+      <hr />
+      {superficialInfo.stats.hasTask && (
+        <button onClick={() => contentClient.retryExecutor(inspectedId)}>{'Retry'}</button>
+      )}
+      {superficialInfo.stats.settledAt !== 0 && (
+        <button onClick={() => contentClient.invalidateExecutor(inspectedId)}>{'Invalidate'}</button>
+      )}
+      {superficialInfo.stats.isPending && (
+        <button onClick={() => contentClient.abortExecutor(inspectedId)}>{'Abort'}</button>
+      )}
     </>
   );
 };
@@ -174,7 +185,7 @@ const PartInspectionViewView = ({ inspectedId, part }: PartInspectionViewProps) 
         if (definition.type === 'executor') {
           contentClient.startInspection(definition.id);
         } else {
-          contentClient.goToDefinition(definition.type, part, path);
+          contentClient.goToDefinition(inspectedId, part, path);
         }
       }}
     />
@@ -209,7 +220,7 @@ const PartChildrenInspectionViewView = ({ inspectedId, part }: PartChildrenInspe
         if (definition.type === 'executor') {
           contentClient.startInspection(definition.id);
         } else {
-          contentClient.goToDefinition(definition.type, part, path);
+          contentClient.goToDefinition(inspectedId, part, path);
         }
       }}
     />
