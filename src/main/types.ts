@@ -52,7 +52,6 @@ export type InspectionPart = 'key' | 'value' | 'reason' | 'task' | 'annotations'
 
 export type PanelMessage =
   | { type: 'devtools_panel_opened' }
-  | { type: 'devtools_panel_opened_for_origin'; payload: { origin: string } }
   | { type: 'devtools_panel_closed' }
   | { type: 'retry_executor'; payload: { id: string } }
   | { type: 'invalidate_executor'; payload: { id: string } }
@@ -62,9 +61,8 @@ export type PanelMessage =
   | { type: 'inspection_expanded'; payload: { id: string; part: InspectionPart; path: number[] } };
 
 export type ContentMessage =
-  | { type: 'devtools_content_opened'; payload: { origin: string } }
+  | { type: 'devtools_content_opened' }
   | { type: 'devtools_content_closed'; payload: { origin: string } }
-  | { type: 'adopt_existing_executors'; payload: SuperficialInfo[] }
   | { type: 'executor_attached'; payload: SuperficialInfo }
   | { type: 'executor_detached'; payload: { id: string } }
   | { type: 'stats_changed'; payload: { id: string; stats: Stats } }

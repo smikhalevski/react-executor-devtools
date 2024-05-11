@@ -80,20 +80,11 @@ function receiveMessage(message: PanelMessage): void {
   console.log('content_main/receiveMessage', message);
 
   switch (message.type) {
-    case 'devtools_panel_opened_for_origin':
-      if (contentState.isConnected || contentState.origin !== message.payload.origin) {
-        break;
-      }
-    // fallthrough
-
     case 'devtools_panel_opened':
       contentState.isConnected = true;
 
-      const superficialInfos = Array.from(contentState.executorInfos).map(entry =>
-        getSuperficialInfo(entry[0], entry[1].executor)
-      );
-      if (superficialInfos.length !== 0) {
-        sendMessage({ type: 'adopt_existing_executors', payload: superficialInfos });
+      for (const entry of contentState.executorInfos) {
+        sendMessage({ type: 'executor_attached', payload: getSuperficialInfo(entry[0], entry[1].executor) });
       }
       break;
 
@@ -308,7 +299,7 @@ const devtools: ExecutorPlugin = executor => {
 
 window.__REACT_EXECUTOR_DEVTOOLS__ = { plugin: devtools };
 
-sendMessage({ type: 'devtools_content_opened', payload: { origin: contentState.origin } });
+sendMessage({ type: 'devtools_content_opened' });
 
 function getSuperficialInfo(id: string, executor: Executor): SuperficialInfo {
   return {

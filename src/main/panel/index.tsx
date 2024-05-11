@@ -35,21 +35,6 @@ function sendMessage(message: PanelMessage): void {
 function receiveMessage(message: ContentMessage): void {
   console.log('panel/receiveMessage', message);
   switch (message.type) {
-    case 'adopt_existing_executors': {
-      const ids = idsExecutor.get();
-
-      for (const superficialInfo of message.payload) {
-        if (idsExecutor.get().find(x => x.id === superficialInfo.id)) {
-          continue;
-        }
-        ids.push({ origin: superficialInfo.origin, id: superficialInfo.id });
-        getOrCreateSuperficialInfoExecutor(superficialInfo.id).resolve(superficialInfo);
-      }
-
-      idsExecutor.resolve(ids);
-      break;
-    }
-
     case 'executor_attached':
       if (idsExecutor.get().find(x => x.id === message.payload.id)) {
         break;
@@ -113,7 +98,7 @@ function receiveMessage(message: ContentMessage): void {
       break;
 
     case 'devtools_content_opened':
-      sendMessage({ type: 'devtools_panel_opened_for_origin', payload: { origin: message.payload.origin } });
+      sendMessage({ type: 'devtools_panel_opened' });
       break;
 
     case 'devtools_content_closed': {
