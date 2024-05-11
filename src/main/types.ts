@@ -55,6 +55,7 @@ export type PanelMessage =
   | { type: 'retry_executor'; payload: { id: string } }
   | { type: 'invalidate_executor'; payload: { id: string } }
   | { type: 'inspection_started'; payload: { id: string } }
+  | { type: 'go_to_definition'; payload: { type: string; part: InspectionPart; path: number[] } }
   | { type: 'inspection_expanded'; payload: { id: string; part: InspectionPart; path: number[] } };
 
 export type ContentMessage =
@@ -66,4 +67,5 @@ export type ContentMessage =
   | { type: 'value_changed'; payload: { id: string; inspection: Inspection } }
   | { type: 'reason_changed'; payload: { id: string; inspection: Inspection } }
   | { type: 'plugins_changed'; payload: { id: string; inspection: Inspection } }
-  | { type: 'annotations_changed'; payload: { id: string; inspection: Inspection } };
+  | { type: 'annotations_changed'; payload: { id: string; inspection: Inspection } }
+  | { type: 'go_to_definition_source' };

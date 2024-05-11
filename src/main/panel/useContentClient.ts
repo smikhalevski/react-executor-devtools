@@ -4,6 +4,8 @@ import type { InspectionPart } from '../types';
 export interface ContentClient {
   startInspection(id: string): void;
 
+  goToDefinition(type: string, part: InspectionPart, path: number[]): void;
+
   retryExecutor(id: string): void;
 
   invalidateExecutor(id: string): void;

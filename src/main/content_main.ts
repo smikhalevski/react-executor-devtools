@@ -4,6 +4,7 @@ import {
   type ContentMessage,
   INSPECTED_VALUE,
   type Inspection,
+  type InspectionPart,
   type PanelMessage,
   type Stats,
   type SuperficialInfo,
@@ -32,13 +33,24 @@ const contentState: ContentState = {
 };
 
 const inspectOptions: InspectOptions = {
-  preprocessor: inspection => {
-    const ex = inspection[INSPECTED_VALUE];
+  preprocessor(inspection) {
+    const value = inspection[INSPECTED_VALUE];
 
-    const x = Array.from(contentState.executorInfos.values()).find(x => x.executor === ex);
+    if (typeof value === 'function') {
+      inspection.annotations = { definition: { type: 'function' } };
+      return;
+    }
 
-    if (x !== undefined) {
-      inspection.annotations = { isExecutor: true };
+    if (value === null || typeof value !== 'object') {
+      return;
+    }
+
+    // Lookup a matching executor
+    for (const entry of contentState.executorInfos) {
+      if (entry[1].executor === value) {
+        inspection.annotations = { definition: { type: 'executor', id: entry[0] } };
+        break;
+      }
     }
   },
 };
@@ -96,6 +108,19 @@ function receiveMessage(message: PanelMessage): void {
       break;
     }
 
+    case 'go_to_definition': {
+      let inspection = getInspection(contentState.inspectableInfo!, message.payload.part);
+
+      for (const index of message.payload.path) {
+        inspection = inspection.children![index];
+      }
+
+      (window as any).__REACT_EXECUTOR_DEVTOOLS__.definition = inspection[INSPECTED_VALUE];
+
+      sendMessage({ type: 'go_to_definition_source' });
+      break;
+    }
+
     case 'inspection_expanded': {
       const { inspectableInfo } = contentState;
       const { part, path } = message.payload;
@@ -104,29 +129,7 @@ function receiveMessage(message: PanelMessage): void {
         break;
       }
 
-      let inspection;
-
-      switch (part) {
-        case 'key':
-          inspection = inspectableInfo.keyInspection;
-          break;
-
-        case 'value':
-          inspection = inspectableInfo.valueInspection;
-          break;
-
-        case 'reason':
-          inspection = inspectableInfo.reasonInspection;
-          break;
-
-        case 'annotations':
-          inspection = inspectableInfo.annotationsInspection;
-          break;
-
-        case 'plugins':
-          inspection = inspectableInfo.pluginsInspection;
-          break;
-      }
+      const inspection = getInspection(inspectableInfo, part);
 
       let childInspection = inspection;
       for (const index of path) {
@@ -259,4 +262,23 @@ function getStats(executor: Executor): Stats {
     isPending: executor.isPending,
     isActive: executor.isActive,
   };
+}
+
+function getInspection(inspectableInfo: InspectableInfo, part: InspectionPart): Inspection {
+  switch (part) {
+    case 'key':
+      return inspectableInfo.keyInspection;
+
+    case 'value':
+      return inspectableInfo.valueInspection;
+
+    case 'reason':
+      return inspectableInfo.reasonInspection;
+
+    case 'annotations':
+      return inspectableInfo.annotationsInspection;
+
+    case 'plugins':
+      return inspectableInfo.pluginsInspection;
+  }
 }

@@ -164,6 +164,14 @@ const PartInspectionViewView = ({ inspectedId, part }: PartInspectionViewProps) 
       onExpanded={path => {
         contentClient.expandInspection(inspectedId, part, path);
       }}
+      onGoToDefinition={(definition, path) => {
+        if (definition.type === 'executor') {
+          contentClient.startInspection(definition.id);
+        }
+        if (definition.type === 'function') {
+          contentClient.goToDefinition(definition.type, part, path);
+        }
+      }}
     />
   );
 };
@@ -191,6 +199,14 @@ const PartChildrenInspectionViewView = ({ inspectedId, part }: PartChildrenInspe
       path={[index]}
       onExpanded={path => {
         contentClient.expandInspection(inspectedId, part, path);
+      }}
+      onGoToDefinition={(definition, path) => {
+        if (definition.type === 'executor') {
+          contentClient.startInspection(definition.id);
+        }
+        if (definition.type === 'function') {
+          contentClient.goToDefinition(definition.type, part, path);
+        }
       }}
     />
   ));

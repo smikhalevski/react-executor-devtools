@@ -106,6 +106,8 @@ const contentClient: ContentClient = {
     getOrCreatePartInspectionExecutor(id, 'annotations').resolve(inspect(executorMocks[id].annotations));
   },
 
+  goToDefinition(definition) {},
+
   retryExecutor(id) {},
 
   invalidateExecutor(id) {},

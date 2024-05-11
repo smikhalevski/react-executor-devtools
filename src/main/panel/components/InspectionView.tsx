@@ -2,18 +2,22 @@ import { clsx } from 'clsx';
 import React, { useState } from 'react';
 import { ChevronIcon } from '../../gen/icons/ChevronIcon';
 import { DebugIcon } from '../../gen/icons/DebugIcon';
+import { EyeIcon } from '../../gen/icons/EyeIcon';
 import type { Inspection } from '../../types';
 import css from './InspectionView.module.css';
 
 export interface InspectionViewProps {
   inspection: Inspection;
   onExpanded: (path: number[]) => void;
+  onGoToDefinition: (definition: any, path: number[]) => void;
   path?: number[];
   indent?: number;
 }
 
-export const InspectionView = ({ inspection, onExpanded, path = [], indent = 0 }: InspectionViewProps) => {
+export const InspectionView = (props: InspectionViewProps) => {
+  const { inspection, onExpanded, onGoToDefinition, path = [], indent = 0 } = props;
   const [isExpanded, setExpanded] = useState(false);
+  const definition = inspection.annotations?.definition;
 
   const handleExpandCollapseToggle = () => {
     setExpanded(isExpanded => !isExpanded);
@@ -33,18 +37,36 @@ export const InspectionView = ({ inspection, onExpanded, path = [], indent = 0 }
         {inspection.hasChildren && (
           <ChevronIcon className={clsx(css.ExpandCollapseToggle, isExpanded && css.Expanded)} />
         )}
+
         {inspection.keyDescription !== undefined && (
           <span className={css.KeyDescription}>{inspection.keyDescription}</span>
         )}
+
         {inspection.keyDescription !== undefined && <span className={css.AfterKeyDescription}>{':'}</span>}
+
         <span className={css.ValueDescription}>
-          {inspection.annotations?.isExecutor && (
-            <DebugIcon
-              width={14}
-              height={14}
-              style={{ verticalAlign: 'top' }}
-            />
-          )}
+          {definition &&
+            (definition?.type === 'executor' ? (
+              <DebugIcon
+                width={14}
+                height={14}
+                style={{ verticalAlign: 'top', cursor: 'pointer' }}
+                onClick={event => {
+                  event.preventDefault();
+                  onGoToDefinition(definition, path);
+                }}
+              />
+            ) : (
+              <EyeIcon
+                width={14}
+                height={14}
+                style={{ verticalAlign: 'top', cursor: 'pointer' }}
+                onClick={event => {
+                  event.preventDefault();
+                  onGoToDefinition(definition, path);
+                }}
+              />
+            ))}
           {inspection.valueDescription}
         </span>
       </span>
@@ -57,6 +79,7 @@ export const InspectionView = ({ inspection, onExpanded, path = [], indent = 0 }
             path={path.concat(index)}
             indent={indent + 1}
             onExpanded={onExpanded}
+            onGoToDefinition={onGoToDefinition}
           />
         )) || (
           <span

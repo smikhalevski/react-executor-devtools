@@ -84,6 +84,16 @@ function receiveMessage(message: ContentMessage): void {
 
       getOrCreatePartInspectionExecutor(message.payload.id, part[message.type]).resolve(message.payload.inspection);
       break;
+
+    case 'go_to_definition_source':
+      console.log('NAVIGATING');
+      chrome.devtools.inspectedWindow.eval(`
+        if (__REACT_EXECUTOR_DEVTOOLS__.definition !== undefined) {
+          inspect(__REACT_EXECUTOR_DEVTOOLS__.definition);
+          __REACT_EXECUTOR_DEVTOOLS__.definition = undefined;
+        }
+      `);
+      break;
   }
 }
 
@@ -91,6 +101,9 @@ const contentClient: ContentClient = {
   startInspection(id) {
     inspectedIdExecutor.resolve(id);
     sendMessage({ type: 'inspection_started', payload: { id } });
+  },
+  goToDefinition(type, part, path) {
+    sendMessage({ type: 'go_to_definition', payload: { type, part, path } });
   },
   retryExecutor(id) {
     sendMessage({ type: 'retry_executor', payload: { id } });
