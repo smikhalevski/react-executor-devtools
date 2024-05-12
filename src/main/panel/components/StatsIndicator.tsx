@@ -1,9 +1,9 @@
 import { clsx } from 'clsx';
 import React from 'react';
+import { ExecutorIcon } from '../../gen/icons/ExecutorIcon';
+import { InvalidatedExecutorIcon } from '../../gen/icons/InvalidatedExecutorIcon';
+import { PendingExecutorIcon } from '../../gen/icons/PendingExecutorIcon';
 import type { ExecutorStats } from '../../types';
-import { DefaultIcon } from '../../gen/icons/DefaultIcon';
-import { InvalidatedIcon } from '../../gen/icons/InvalidatedIcon';
-import { SpinnerIcon } from '../../gen/icons/SpinnerIcon';
 import css from './StatsIndicator.module.css';
 
 interface StatsIndicatorProps {
@@ -12,14 +12,18 @@ interface StatsIndicatorProps {
 
 export const StatsIndicator = ({ stats }: StatsIndicatorProps) => {
   return (
-    <div
+    <span
       className={clsx(
         css.StatsIndicator,
         stats.settledAt === 0 ? css.Unsettled : stats.isFulfilled ? css.Fulfilled : css.Rejected
       )}
     >
-      {stats.isPending && <SpinnerIcon className={css.SpinnerIcon} />}
-      {stats.invalidatedAt === 0 ? <DefaultIcon className={css.Icon} /> : <InvalidatedIcon className={css.Icon} />}
-    </div>
+      {stats.isPending && <PendingExecutorIcon className={css.PendingExecutorIcon} />}
+      {stats.invalidatedAt === 0 ? (
+        <ExecutorIcon className={css.Icon} />
+      ) : (
+        <InvalidatedExecutorIcon className={css.Icon} />
+      )}
+    </span>
   );
 };

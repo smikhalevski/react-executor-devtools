@@ -1,18 +1,12 @@
-:root {
-    --color-stats-indicator-unsettled: #cbcbcb;
-    --color-stats-indicator-fulfilled: green;
-    --color-stats-indicator-rejected: red;
-    --color-stats-indicator-warning: #F57900;
-}
-
 .StatsIndicator {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 14px;
-    height: 14px;
+    width: var(--line-height-data);
+    height: var(--line-height-data);
     position: relative;
-    vertical-align: top;
+    vertical-align: bottom;
+    margin-inline-end: 5px;
 }
 
 .Icon {
@@ -21,25 +15,21 @@
     height: 14px;
 }
 
-.SpinnerIcon {
+.PendingExecutorIcon {
     composes: Icon;
     animation: Spin 750ms linear infinite;
 }
 
 .Unsettled {
-    color: var(--color-stats-indicator-unsettled);
+    color: var(--color-executor-unsettled);
 }
 
 .Fulfilled {
-    color: var(--color-stats-indicator-fulfilled);
+    color: var(--color-executor-fulfilled);
 }
 
 .Rejected {
-    color: var(--color-stats-indicator-rejected);
-}
-
-.Warning {
-    color: var(--color-stats-indicator-warning);
+    color: var(--color-executor-rejected);
 }
 
 @keyframes Spin {

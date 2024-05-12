@@ -1,0 +1,30 @@
+.Section {
+    padding: 0.3rem 0.5rem;
+    border-top: solid 1px var(--color-border);
+}
+
+.SectionTitle {
+    display: block;
+    white-space: nowrap;
+}
+
+.NoData {
+    color: var(--color-no-data);
+}
+
+.ButtonGroup {
+    display: flex;
+    gap: 8px;
+
+    &:not(:empty) {
+        margin-block-start: 8px;
+    }
+}
+
+.Warning {
+    color: var(--color-warning);
+    width: 14px;
+    height: 14px;
+    margin: 2px 7px 2px 2px;
+    vertical-align: top;
+}

@@ -1,10 +1,10 @@
-:root {
-    --inspection-indent: 0
-}
-
 .Inspection {
+    --inspection-indent: 0;
     display: flex;
-    margin-inline-start: calc(var(--inspection-indent) * 1em);
+    margin-inline-start: calc(var(--inspection-indent) * 1rem);
+    font-family: var(--font-family-monospace);
+    font-size: var(--font-size-monospace-normal);
+    line-height: var(--line-height-data);
 }
 
 .ExpandCollapseToggle {
@@ -22,7 +22,7 @@
 }
 
 .KeyPreview {
-    color: var(--color-attribute-name-not-editable);
+    color: var(--color-key-preview);
     flex: 0 0 auto;
     cursor: default;
 }
@@ -33,7 +33,7 @@
 }
 
 .ValuePreview {
-    color: var(--color-attribute-value);
+    color: var(--color-value-preview);
     white-space: pre;
     overflow: hidden;
     text-overflow: ellipsis;

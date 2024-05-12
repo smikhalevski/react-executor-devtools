@@ -1,7 +1,6 @@
 import { clsx } from 'clsx';
 import React, { useState } from 'react';
 import { ChevronIcon } from '../../gen/icons/ChevronIcon';
-import { DebugIcon } from '../../gen/icons/DebugIcon';
 import { EyeIcon } from '../../gen/icons/EyeIcon';
 import type { Inspection, Location } from '../../types';
 import { useInspector } from '../executors';
@@ -47,30 +46,19 @@ export const InspectionView = (props: InspectionViewProps) => {
         {inspection.keyPreview !== undefined && <span className={css.AfterKeyPreview}>{':'}</span>}
 
         <span className={css.ValuePreview}>
-          {location &&
-            (location?.type === 'executor' ? (
-              location.id !== inspector?.id && (
-                <DebugIcon
-                  width={14}
-                  height={14}
-                  style={{ verticalAlign: 'top', cursor: 'pointer' }}
-                  onClick={event => {
-                    event.preventDefault();
-                    onGoToLocation(location, path);
-                  }}
-                />
-              )
-            ) : (
+          {location !== undefined && !(location.type === 'executor' && location.id === inspector?.id) && (
+            <span
+              onClick={() => {
+                onGoToLocation(location, path);
+              }}
+              style={{ display: 'inline-flex', alignItems: 'center', verticalAlign: 'middle', marginInlineEnd: '4px' }}
+            >
               <EyeIcon
                 width={14}
                 height={14}
-                style={{ verticalAlign: 'top', cursor: 'pointer' }}
-                onClick={event => {
-                  event.preventDefault();
-                  onGoToLocation(location, path);
-                }}
               />
-            ))}
+            </span>
+          )}
           {inspection.valuePreview}
         </span>
       </span>

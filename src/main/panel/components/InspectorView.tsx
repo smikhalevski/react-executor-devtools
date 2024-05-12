@@ -1,63 +1,86 @@
-import React, { Fragment } from 'react';
+import React, { Fragment, type ReactNode } from 'react';
 import { WarningIcon } from '../../gen/icons/WarningIcon';
 import type { ExecutorPart, Location } from '../../types';
 import { useDetails, useInspector, usePartInspection } from '../executors';
 import { useContentClient } from '../useContentClient';
+import { Button } from './Button';
 import { InspectionView } from './InspectionView';
+import css from './InspectorView.module.css';
 import { StatsIndicator } from './StatsIndicator';
-import css from './StatsIndicator.module.css';
 
 export const InspectorView = () => {
   const inspector = useInspector();
 
   if (inspector === null) {
-    return 'No inspection';
+    return null;
   }
 
   return (
     <Fragment key={inspector.id}>
-      {'Key'}
-      <PartInspectionView
-        id={inspector.id}
-        part={'key'}
-      />
-      <hr />
-      <DetailsView id={inspector.id} />
-      <hr />
-      {'Value'}
-      <PartInspectionView
-        id={inspector.id}
-        part={'value'}
-      />
-      <hr />
-      {'Reason'}
-      <PartInspectionView
-        id={inspector.id}
-        part={'reason'}
-      />
-      <hr />
-      {'Task'}
-      <PartInspectionView
-        id={inspector.id}
-        part={'task'}
-      />
-      <hr />
-      {'Plugins'}
-      <PartInspectionView
-        id={inspector.id}
-        part={'plugins'}
-        isExploded={true}
-      />
-      <hr />
-      {'Annotations'}
-      <PartInspectionView
-        id={inspector.id}
-        part={'annotations'}
-        isExploded={true}
-      />
+      <Section title={'Key'}>
+        <PartInspectionView
+          id={inspector.id}
+          part={'key'}
+        />
+      </Section>
+
+      <Section title={'Status'}>
+        <DetailsView id={inspector.id} />
+      </Section>
+
+      <Section title={'Value'}>
+        <PartInspectionView
+          id={inspector.id}
+          part={'value'}
+        />
+      </Section>
+
+      <Section title={'Reason'}>
+        <PartInspectionView
+          id={inspector.id}
+          part={'reason'}
+        />
+      </Section>
+
+      <Section title={'Task'}>
+        <TaskInspectionView
+          id={inspector.id}
+          noDataLabel={'No task'}
+        />
+      </Section>
+
+      <Section title={'Plugins'}>
+        <PartInspectionView
+          id={inspector.id}
+          part={'plugins'}
+          isExploded={true}
+          noDataLabel={'No plugins'}
+        />
+      </Section>
+
+      <Section title={'Annotations'}>
+        <PartInspectionView
+          id={inspector.id}
+          part={'annotations'}
+          isExploded={true}
+          noDataLabel={'No annotations'}
+        />
+      </Section>
     </Fragment>
   );
 };
+
+interface SectionProps {
+  title?: ReactNode;
+  children: ReactNode;
+}
+
+const Section = ({ title, children }: SectionProps) => (
+  <div className={css.Section}>
+    {title !== undefined && <span className={css.SectionTitle}>{title}</span>}
+    {children}
+  </div>
+);
 
 interface DetailsViewProps {
   id: string;
@@ -95,15 +118,15 @@ const DetailsView = ({ id }: DetailsViewProps) => {
         </>
       )}
 
-      <hr />
+      <div className={css.ButtonGroup}>
+        {details.stats.hasTask && <Button onPress={() => contentClient.retryExecutor(id)}>{'Retry'}</Button>}
 
-      {details.stats.hasTask && <button onClick={() => contentClient.retryExecutor(id)}>{'Retry'}</button>}
+        {details.stats.settledAt !== 0 && (
+          <Button onPress={() => contentClient.invalidateExecutor(id)}>{'Invalidate'}</Button>
+        )}
 
-      {details.stats.settledAt !== 0 && (
-        <button onClick={() => contentClient.invalidateExecutor(id)}>{'Invalidate'}</button>
-      )}
-
-      {details.stats.isPending && <button onClick={() => contentClient.abortExecutor(id)}>{'Abort'}</button>}
+        {details.stats.isPending && <Button onPress={() => contentClient.abortExecutor(id)}>{'Abort'}</Button>}
+      </div>
     </>
   );
 };
@@ -111,10 +134,11 @@ const DetailsView = ({ id }: DetailsViewProps) => {
 interface PartInspectionViewProps {
   id: string;
   part: ExecutorPart;
+  noDataLabel?: ReactNode;
   isExploded?: boolean;
 }
 
-const PartInspectionView = ({ id, part, isExploded }: PartInspectionViewProps) => {
+const PartInspectionView = ({ id, part, noDataLabel, isExploded }: PartInspectionViewProps) => {
   const contentClient = useContentClient();
   const inspection = usePartInspection(id, part);
 
@@ -145,7 +169,7 @@ const PartInspectionView = ({ id, part, isExploded }: PartInspectionViewProps) =
   }
 
   if (inspection.children === undefined) {
-    return <div>{'Nothing here'}</div>;
+    return <div className={css.NoData}>{noDataLabel}</div>;
   }
 
   return inspection.children.map((inspection, index) => (
@@ -157,4 +181,24 @@ const PartInspectionView = ({ id, part, isExploded }: PartInspectionViewProps) =
       onGoToLocation={handleGoToLocation}
     />
   ));
+};
+
+interface TaskInspectionViewProps {
+  id: string;
+  noDataLabel: ReactNode;
+}
+
+const TaskInspectionView = ({ id, noDataLabel }: TaskInspectionViewProps) => {
+  const details = useDetails(id);
+
+  if (!details.stats.hasTask) {
+    return <div className={css.NoData}>{noDataLabel}</div>;
+  }
+
+  return (
+    <PartInspectionView
+      id={id}
+      part={'task'}
+    />
+  );
 };

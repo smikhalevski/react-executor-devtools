@@ -5,6 +5,27 @@
     --font-size-sans-small: 10px;
     --font-size-sans-normal: 12px;
     --font-size-sans-large: 14px;
+    --color-expand-collapse-toggle: #777d88;
+
+    /*--color-attribute-name-not-editable: #23272f;*/
+    --color-key-preview: #23272f;
+    /*--color-attribute-value: #1a1aa6;*/
+    --color-value-preview: #1a1aa6;
+    --color-text: #000000;
+    --color-resize-bar: #eeeeee;
+    --color-border: #eeeeee;
+
+    /* React Executor Devtools */
+
+    --color-executor-unsettled: #cbcbcb;
+    --color-executor-fulfilled: green;
+    --color-executor-rejected: red;
+    --color-warning: #F57900;
+    --color-no-data: #a6a6a6;
+
+
+    /* React Devtools */
+
     --line-height-data: 18px;
     --color-attribute-name: #ef6632;
     --color-attribute-name-not-editable: #23272f;
@@ -24,7 +45,6 @@
     --color-button-active: #0088fa;
     --color-button-focus: #23272f;
     --color-button-hover: #23272f;
-    --color-border: #eeeeee;
     --color-commit-did-not-render-fill: #cfd1d5;
     --color-commit-did-not-render-fill-text: #000000;
     --color-commit-did-not-render-pattern: #cfd1d5;
@@ -68,7 +88,7 @@
     --color-error-background: hsl(0, 100%, 97%);
     --color-error-border: hsl(0, 100%, 92%);
     --color-error-text: #ff0000;
-    --color-expand-collapse-toggle: #777d88;
+    /*--color-expand-collapse-toggle: #777d88;*/
     --color-forget-badge: #2683E2;
     --color-link: #0000ff;
     --color-modal-background: rgba(255, 255, 255, 0.75);
@@ -80,7 +100,7 @@
     --color-record-active: #fc3a4b;
     --color-record-hover: #3578e5;
     --color-record-inactive: #0088fa;
-    --color-resize-bar: #eeeeee;
+    /*--color-resize-bar: #eeeeee;*/
     --color-resize-bar-active: #dcdcdc;
     --color-resize-bar-border: #d1d1d1;
     --color-resize-bar-dot: #333333;
@@ -130,7 +150,7 @@
     --color-selected-tree-highlight-inactive: rgba(0, 0, 0, 0.05);
     --color-scroll-caret: rgba(150, 150, 150, 0.5);
     --color-tab-selected-border: #0088fa;
-    --color-text: #000000;
+    /*--color-text: #000000;*/
     --color-text-invalid: #ff0000;
     --color-text-selected: #ffffff;
     --color-toggle-background-invalid: #fc3a4b;
@@ -177,7 +197,8 @@
 body {
     background-color: var(--color-background);
     color: var(--color-text);
-    font-family: var(--font-family-monospace);
-    font-size: var(--font-size-monospace-normal);
+
+    font-family: var(--font-family-sans);
+    font-size: var(--font-size-sans-normal);
     line-height: var(--line-height-data);
 }

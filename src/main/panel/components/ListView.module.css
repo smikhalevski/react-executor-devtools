@@ -3,6 +3,9 @@
 .SelectedListItem,
 .HoveredListItem {
     color: var(--color-component-name);
+    font-family: var(--font-family-monospace);
+    font-size: var(--font-size-monospace-normal);
+    line-height: var(--line-height-data);
 }
 .HoveredListItem {
     background-color: var(--color-background-hover);
@@ -12,7 +15,7 @@
 }
 
 .ListItemWrapper {
-    padding: 0 0.25rem;
+    padding: 0.1rem 0.5rem;
     white-space: pre;
     height: var(--line-height-data);
     line-height: var(--line-height-data);
@@ -38,10 +41,10 @@
     --color-attribute-value: var(--color-attribute-value-inverted);
     --color-expand-collapse-toggle: var(--color-component-name-inverted);
 
-    --color-stats-indicator-fulfilled: var(--color-text-selected);
-    --color-stats-indicator-rejected: var(--color-text-selected);
-    --color-stats-indicator-warning: var(--color-text-selected);
-    --color-stats-indicator-unsettled: rgba(255, 255, 255, 0.6);
+    --color-executor-fulfilled: var(--color-text-selected);
+    --color-executor-rejected: var(--color-text-selected);
+    --color-warning: var(--color-text-selected);
+    --color-executor-unsettled: rgba(255, 255, 255, 0.6);
 }
 
 /*.KeyName {*/
