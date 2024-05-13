@@ -13,10 +13,6 @@
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
   },
-  "permissions": [
-    "storage",
-    "scripting"
-  ],
   "host_permissions": [
     "<all_urls>"
   ],
