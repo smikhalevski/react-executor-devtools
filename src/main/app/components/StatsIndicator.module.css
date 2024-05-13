@@ -1,39 +1,38 @@
 .StatsIndicator {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: var(--line-height-data);
-    height: var(--line-height-data);
-    position: relative;
-    vertical-align: bottom;
-    margin-inline-end: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--line-height-data);
+  height: var(--line-height-data);
+  position: relative;
+  vertical-align: bottom;
 }
 
-.Icon {
-    position: absolute;
-    width: 14px;
-    height: 14px;
+.ExecutorIcon {
+  position: absolute;
+  width: 14px;
+  height: 14px;
 }
 
 .PendingExecutorIcon {
-    composes: Icon;
-    animation: Spin 750ms linear infinite;
+  composes: ExecutorIcon;
+  animation: Spin 750ms linear infinite;
 }
 
 .Unsettled {
-    color: var(--color-executor-unsettled);
+  color: var(--color-executor-unsettled);
 }
 
 .Fulfilled {
-    color: var(--color-executor-fulfilled);
+  color: var(--color-executor-fulfilled);
 }
 
 .Rejected {
-    color: var(--color-executor-rejected);
+  color: var(--color-executor-rejected);
 }
 
 @keyframes Spin {
-    100% {
-        transform: rotate(1turn);
-    }
+  100% {
+    transform: rotate(1turn);
+  }
 }

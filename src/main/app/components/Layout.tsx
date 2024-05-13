@@ -10,8 +10,8 @@ const resizePercentage: { horizontal: string; vertical: string } =
   resizePercentageJson !== null ? JSON.parse(resizePercentageJson) : { horizontal: '40%', vertical: '50%' };
 
 interface LayoutProps {
-  list?: ReactNode;
-  inspector?: ReactNode;
+  leftBlock?: ReactNode;
+  rightBlock?: ReactNode;
 }
 
 export const Layout = (props: LayoutProps) => {
@@ -55,7 +55,7 @@ export const Layout = (props: LayoutProps) => {
       window.removeEventListener('mouseup', unsubscribe);
       window.removeEventListener('blur', unsubscribe);
 
-      layoutElement.classList.remove(css.Dragging);
+      layoutElement.classList.remove(css.Resizing);
       localStorage.setItem(RESIZE_PERCENTAGE_KEY, JSON.stringify(resizePercentage));
     };
 
@@ -65,7 +65,7 @@ export const Layout = (props: LayoutProps) => {
     window.addEventListener('mouseup', unsubscribe);
     window.addEventListener('blur', unsubscribe);
 
-    layoutElement.classList.add(css.Dragging);
+    layoutElement.classList.add(css.Resizing);
   };
 
   return (
@@ -77,14 +77,14 @@ export const Layout = (props: LayoutProps) => {
         '--vertical-resize-percentage': resizePercentage.vertical,
       }}
     >
-      <div className={css.ListWrapper}>{props.list}</div>
+      <div className={css.LeftBlock}>{props.leftBlock}</div>
       <div
         className={css.ResizeBarWrapper}
         onMouseDown={handleStartDrag}
       >
         <div className={css.ResizeBar} />
       </div>
-      <div className={css.InspectorWrapper}>{props.inspector}</div>
+      <div className={css.RightBlock}>{props.rightBlock}</div>
     </div>
   );
 };

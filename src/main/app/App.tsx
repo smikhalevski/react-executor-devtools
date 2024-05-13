@@ -6,8 +6,8 @@ import { ListView } from './components/ListView';
 export const App = () => {
   return (
     <Layout
-      list={<ListView />}
-      inspector={<InspectorView />}
+      leftBlock={<ListView />}
+      rightBlock={<InspectorView />}
     />
   );
 };

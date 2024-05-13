@@ -7,7 +7,7 @@
   "icons": {
     "16": "favicon-16.png",
     "32": "favicon-32.png",
-    "192": "favicon-192.png"
+    "128": "favicon-128.png"
   },
   "devtools_page": "devtools.html",
   "content_security_policy": {

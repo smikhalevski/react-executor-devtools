@@ -1,42 +1,43 @@
 .Inspection {
-    --inspection-indent: 0;
-    display: flex;
-    margin-inline-start: calc(var(--inspection-indent) * 1rem);
-    font-family: var(--font-family-monospace);
-    font-size: var(--font-size-monospace-normal);
-    line-height: var(--line-height-data);
-}
-
-.ExpandCollapseToggle {
-    width: 14px;
-    height: 14px;
-    color: var(--color-expand-collapse-toggle);
-    vertical-align: top;
-}
-.ExpandCollapseToggle.Expanded {
-    transform: rotate(90deg);
+  display: flex;
+  padding-inline-start: calc(var(--inspection-indent) * 14px);
+  font-family: var(--font-family-monospace);
+  font-size: var(--font-size-monospace-normal);
+  line-height: var(--line-height-data);
+  color: var(--color-text);
+  --inspection-indent: 0;
 }
 
 .ExpandCollapseToggleSpacer {
-    padding-inline-start: 14px;
+  padding-inline-start: calc((var(--inspection-indent) + 1) * 14px);
+}
+
+.ExpandCollapseToggle {
+  align-self: center;
+  width: 14px;
+  height: 14px;
+  color: var(--color-expand-collapse-toggle);
+
+  &.Expanded {
+    transform: rotate(90deg);
+  }
 }
 
 .KeyPreview {
-    color: var(--color-key-preview);
-    flex: 0 0 auto;
-    cursor: default;
+  color: var(--color-key-preview);
+  flex: 0 0 auto;
+  cursor: default;
 }
 
-.AfterKeyPreview {
-    color: var(--color-text);
-    margin-inline-end: 0.5em;
+.Spacer {
+  margin-inline-end: 4px;
 }
 
 .ValuePreview {
-    color: var(--color-value-preview);
-    white-space: pre;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    cursor: default;
-    flex: 1;
+  color: var(--color-value-preview);
+  white-space: pre;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: default;
+  flex: 1;
 }

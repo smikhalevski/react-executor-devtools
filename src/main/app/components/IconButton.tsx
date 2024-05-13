@@ -1,21 +1,21 @@
+import { clsx } from 'clsx';
 import React, { ReactNode } from 'react';
 import { Button } from 'react-aria-components';
-import css from './Button.module.css';
+import css from './IconButton.module.css';
 
-interface ButtonProps {
+interface IconButtonProps {
   children?: ReactNode;
+  className?: string;
   onPress?: () => void;
   isDisabled?: boolean;
 }
 
-const __Button = (props: ButtonProps) => (
+export const IconButton = (props: IconButtonProps) => (
   <Button
-    className={css.Button}
+    className={clsx(css.IconButton, props.className)}
     onPress={props.onPress}
     isDisabled={props.isDisabled}
   >
     {props.children}
   </Button>
 );
-
-export { __Button as Button };

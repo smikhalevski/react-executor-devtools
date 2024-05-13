@@ -1,69 +1,70 @@
 .Tooltip {
-    border-radius: 4px;
-    background: var(--color-tooltip-background);
-    color: var(--color-tooltip-text);
-    forced-color-adjust: none;
-    outline: none;
-    padding: 4px 8px;
-    max-width: 150px;
-    transform: translate3d(0, 0, 0);
+  border-radius: 4px;
+  background: var(--color-tooltip-background);
+  color: var(--color-tooltip-text);
+  forced-color-adjust: none;
+  outline: none;
+  padding: 4px 8px;
+  max-width: 150px;
+  transform: translate3d(0, 0, 0);
 
-    &[data-placement=top] {
-        margin-bottom: 8px;
-        --origin: translateY(4px);
-    }
+  &[data-placement='top'] {
+    margin-bottom: 8px;
+    --origin: translateY(4px);
+  }
 
-    &[data-placement=bottom] {
-        margin-top: 8px;
-        --origin: translateY(-4px);
-
-        & .OverlayArrow svg {
-            transform: rotate(180deg);
-        }
-    }
-
-    &[data-placement=right] {
-        margin-left: 8px;
-        --origin: translateX(-4px);
-
-        & .OverlayArrow svg {
-            transform: rotate(90deg);
-        }
-    }
-
-    &[data-placement=left] {
-        margin-right: 8px;
-        --origin: translateX(4px);
-
-        & .OverlayArrow svg {
-            transform: rotate(-90deg);
-        }
-    }
+  &[data-placement='bottom'] {
+    margin-top: 8px;
+    --origin: translateY(-4px);
 
     & .OverlayArrow svg {
-        display: block;
-        fill: var(--color-tooltip-background);
+      transform: rotate(180deg);
     }
+  }
 
-    &[data-entering] {
-        animation: Slide 200ms;
-    }
+  &[data-placement='right'] {
+    margin-left: 8px;
+    --origin: translateX(-4px);
 
-    &[data-exiting] {
-        animation: Slide 200ms reverse ease-in;
+    & .OverlayArrow svg {
+      transform: rotate(90deg);
     }
+  }
+
+  &[data-placement='left'] {
+    margin-right: 8px;
+    --origin: translateX(4px);
+
+    & .OverlayArrow svg {
+      transform: rotate(-90deg);
+    }
+  }
+
+  & .OverlayArrow svg {
+    display: block;
+    fill: var(--color-tooltip-background);
+  }
+
+  &[data-entering] {
+    animation: Slide 200ms;
+  }
+
+  &[data-exiting] {
+    animation: Slide 200ms reverse ease-in;
+  }
 }
 
-.OverlayArrow {}
+.OverlayArrow {
+}
 
 @keyframes Slide {
-    from {
-        transform: var(--origin);
-        opacity: 0;
-    }
+  from {
+    transform: var(--origin);
+    opacity: 0;
+  }
 
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }

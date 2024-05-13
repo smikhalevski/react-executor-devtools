@@ -3,7 +3,7 @@ import { getValuePreview, inspect, InspectOptions } from './inspect';
 import { ExecutorDetails, ExecutorPart, ExecutorPlugins, ExecutorStats, INSPECTED_VALUE, Inspection } from './types';
 
 export function log(...args: any[]): void {
-  console.log(...args);
+  // console.log(...args);
 }
 
 /**

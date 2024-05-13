@@ -8,22 +8,22 @@ import css from './StatsIndicator.module.css';
 
 interface StatsIndicatorProps {
   stats: ExecutorStats;
+  className?: string;
 }
 
-export const StatsIndicator = ({ stats }: StatsIndicatorProps) => {
-  return (
-    <span
-      className={clsx(
-        css.StatsIndicator,
-        stats.settledAt === 0 ? css.Unsettled : stats.isFulfilled ? css.Fulfilled : css.Rejected
-      )}
-    >
-      {stats.isPending && <PendingExecutorIcon className={css.PendingExecutorIcon} />}
-      {stats.invalidatedAt === 0 ? (
-        <ExecutorIcon className={css.Icon} />
-      ) : (
-        <InvalidatedExecutorIcon className={css.Icon} />
-      )}
-    </span>
-  );
-};
+export const StatsIndicator = (props: StatsIndicatorProps) => (
+  <span
+    className={clsx(
+      css.StatsIndicator,
+      props.stats.settledAt === 0 ? css.Unsettled : props.stats.isFulfilled ? css.Fulfilled : css.Rejected,
+      props.className
+    )}
+  >
+    {props.stats.isPending && <PendingExecutorIcon className={css.PendingExecutorIcon} />}
+    {props.stats.invalidatedAt === 0 ? (
+      <ExecutorIcon className={css.ExecutorIcon} />
+    ) : (
+      <InvalidatedExecutorIcon className={css.ExecutorIcon} />
+    )}
+  </span>
+);

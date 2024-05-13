@@ -1,80 +1,34 @@
 .Button {
-    --outline-focus-visible: 2px solid #0088fa;
+  composes: FocusRing from 'FocusRing.module.css';
 
-    --color-button-background: #d4d4d4;
-    --color-button-background-focus: #ededed;
-    --color-button: #30343b;
-    --color-button-disabled: #cfd1d5;
-    --color-button-active: #0088fa;
-    --color-button-focus: #23272f;
-    --color-button-hover: #23272f;
+  flex: 0 0 auto;
+  color: var(--color-button);
+  background: var(--color-button-background);
+  border: none;
+  border-radius: 4px;
+  appearance: none;
+  vertical-align: top;
+  outline: none;
+  padding: 2px 8px;
+  text-decoration: none;
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-sans-normal);
+  line-height: var(--line-height-data);
+  cursor: pointer;
 
+  &[data-hovered] {
+    color: var(--color-button-hovered);
+    background: var(--color-button-background-hovered);
+  }
 
-    color: var(--color-button);
-    background: var(--color-button-background);
-    border: none;
-    border-radius: 4px;
-    appearance: none;
-    vertical-align: middle;
-    outline: none;
-    padding: 4px 8px;
-    text-decoration: none;
+  &[data-pressed] {
+    color: var(--color-button-pressed);
+    background: var(--color-button-background-pressed);
+  }
 
-    /*&[data-pressed] {*/
-    /*    color: var(--color-button-active);*/
-    /*}*/
-    &[data-hovered] {
-        color: var(--color-button-hover);
-    }
-    /*&[data-focused] {*/
-    /*    background: var(--color-button-background-focus);*/
-    /*    color: var(--color-button-focus);*/
-    /*}*/
-    &[data-disabled] {
-        color: var(--color-button-disabled);
-    }
-
-    &[data-focus-visible] {
-        outline: var(--outline-focus-visible);
-        outline-offset: -1px;
-    }
+  &[data-disabled] {
+    color: var(--color-button-disabled);
+    background: var(--color-button-background-disabled);
+    cursor: default;
+  }
 }
-
-
-/*.Button {*/
-/*    border: none;*/
-/*    background: var(--color-button-background);*/
-/*    color: var(--color-button);*/
-/*    padding: 0;*/
-/*    border-radius: 0.25rem;*/
-/*    flex: 0 0 auto;*/
-/*    cursor: pointer;*/
-/*}*/
-/*.ButtonContent {*/
-/*    display: inline-flex;*/
-/*    align-items: center;*/
-/*    padding: 0.25rem;*/
-/*}*/
-
-/*.Button:hover {*/
-/*    color: var(--color-button-hover);*/
-/*}*/
-/*.Button:active {*/
-/*    color: var(--color-button-focus);*/
-/*    outline: none;*/
-/*}*/
-/*.Button:focus,*/
-/*.ButtonContent:focus {*/
-/*    outline: none;*/
-/*}*/
-
-/*.Button:focus > .ButtonContent {*/
-/*    background: var(--color-button-background-focus);*/
-/*}*/
-
-/*.Button:disabled,*/
-/*.Button:disabled:active {*/
-/*    background: var(--color-button-background);*/
-/*    color: var(--color-button-disabled);*/
-/*    cursor: default;*/
-/*}*/

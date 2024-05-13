@@ -1,11 +1,12 @@
 import React, { Fragment, type ReactNode } from 'react';
-import { WarningIcon } from '../gen/icons/WarningIcon';
 import type { ExecutorPart, Location } from '../../types';
 import { useDetails, useInspector, usePartInspection } from '../executors';
+import { WarningIcon } from '../gen/icons/WarningIcon';
 import { useContentClient } from '../useContentClient';
 import { Button } from './Button';
 import { InspectionView } from './InspectionView';
 import css from './InspectorView.module.css';
+import { Loading } from './Loading';
 import { StatsIndicator } from './StatsIndicator';
 
 export const InspectorView = () => {
@@ -102,30 +103,46 @@ const DetailsView = ({ id }: DetailsViewProps) => {
 
   return (
     <>
-      <StatsIndicator stats={details.stats} />
+      <div className={css.Statuses}>
+        <StatsIndicator
+          stats={details.stats}
+          className={css.Spacer}
+        />
 
-      {statuses.join(', ')}
+        {statuses.join(', ')}
 
-      {!details.stats.isActive && (
-        <>
-          <br />
-          <WarningIcon
-            width={14}
-            height={14}
-            className={css.Warning}
-          />
-          {'Deactivated'}
-        </>
-      )}
+        {!details.stats.isActive && (
+          <>
+            <br />
+            <span className={css.Spacer}>
+              <WarningIcon className={css.DeactivatedIcon} />
+            </span>
+            {'Deactivated'}
+          </>
+        )}
+      </div>
 
       <div className={css.ButtonGroup}>
-        {details.stats.hasTask && <Button onPress={() => contentClient.retryExecutor(id)}>{'Retry'}</Button>}
+        <Button
+          isDisabled={!details.stats.hasTask || details.stats.isPending}
+          onPress={() => contentClient.retryExecutor(id)}
+        >
+          {'Retry'}
+        </Button>
 
-        {details.stats.settledAt !== 0 && (
-          <Button onPress={() => contentClient.invalidateExecutor(id)}>{'Invalidate'}</Button>
-        )}
+        <Button
+          isDisabled={details.stats.settledAt === 0 || details.stats.invalidatedAt !== 0}
+          onPress={() => contentClient.invalidateExecutor(id)}
+        >
+          {'Invalidate'}
+        </Button>
 
-        {details.stats.isPending && <Button onPress={() => contentClient.abortExecutor(id)}>{'Abort'}</Button>}
+        <Button
+          isDisabled={!details.stats.isPending}
+          onPress={() => contentClient.abortExecutor(id)}
+        >
+          {'Abort'}
+        </Button>
       </div>
     </>
   );
@@ -143,7 +160,7 @@ const PartInspectionView = ({ id, part, noDataLabel, isExploded }: PartInspectio
   const inspection = usePartInspection(id, part);
 
   if (inspection === null) {
-    return <div>{'Loading'}</div>;
+    return <Loading />;
   }
 
   const handleExpanded = (path: number[]) => {

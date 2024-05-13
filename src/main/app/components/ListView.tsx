@@ -30,14 +30,17 @@ const ListItemView = ({ id }: ListItemProps) => {
       className={clsx(
         css.ListItem,
         id === inspector?.id && css.SelectedListItem,
-        !details.stats.isActive && css.InactiveSelectedListItem
+        !details.stats.isActive && css.DeactivatedListItem
       )}
       onClick={() => {
         contentClient.startInspection(id);
       }}
     >
       <div className={css.ListItemWrapper}>
-        <StatsIndicator stats={details.stats} />
+        <StatsIndicator
+          stats={details.stats}
+          className={css.StatsIndicator}
+        />
         {details.keyPreview}
       </div>
     </div>

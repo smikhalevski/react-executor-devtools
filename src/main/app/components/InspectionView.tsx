@@ -1,10 +1,13 @@
 import { clsx } from 'clsx';
 import React, { useState } from 'react';
-import { ChevronIcon } from '../gen/icons/ChevronIcon';
-import { EyeIcon } from '../gen/icons/EyeIcon';
 import type { Inspection, Location } from '../../types';
 import { useInspector } from '../executors';
+import { ChevronIcon } from '../gen/icons/ChevronIcon';
+import { EyeIcon } from '../gen/icons/EyeIcon';
+import { IconButton } from './IconButton';
 import css from './InspectionView.module.css';
+import { Loading } from './Loading';
+import { Tooltip } from './Tooltip';
 
 export interface InspectionViewProps {
   inspection: Inspection;
@@ -43,21 +46,21 @@ export const InspectionView = (props: InspectionViewProps) => {
 
         {inspection.keyPreview !== undefined && <span className={css.KeyPreview}>{inspection.keyPreview}</span>}
 
-        {inspection.keyPreview !== undefined && <span className={css.AfterKeyPreview}>{':'}</span>}
+        {inspection.keyPreview !== undefined && <span className={css.Spacer}>{':'}</span>}
 
         <span className={css.ValuePreview}>
-          {location !== undefined && !(location.type === 'executor' && location.id === inspector?.id) && (
-            <span
-              onClick={() => {
-                onGoToLocation(location, path);
-              }}
-              style={{ display: 'inline-flex', alignItems: 'center', verticalAlign: 'middle', marginInlineEnd: '4px' }}
-            >
-              <EyeIcon
-                width={14}
-                height={14}
-              />
-            </span>
+          {location !== undefined && (
+            <Tooltip title={'Go to definition'}>
+              <IconButton
+                className={css.Spacer}
+                isDisabled={location.type === 'executor' && location.id === inspector?.id}
+                onPress={() => {
+                  onGoToLocation(location, path);
+                }}
+              >
+                <EyeIcon />
+              </IconButton>
+            </Tooltip>
           )}
           {inspection.valuePreview}
         </span>
@@ -79,7 +82,7 @@ export const InspectionView = (props: InspectionViewProps) => {
             style={{ '--inspection-indent': indent + 1 }}
             className={clsx(css.Inspection, css.ExpandCollapseToggleSpacer)}
           >
-            {'Loading'}
+            <Loading />
           </span>
         ))}
     </>

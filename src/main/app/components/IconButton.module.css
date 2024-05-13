@@ -1,0 +1,39 @@
+.IconButton {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  color: var(--color-icon-button);
+  background: var(--color-icon-button-background);
+  border: none;
+  border-radius: 50%;
+  appearance: none;
+  vertical-align: top;
+  outline: none;
+  padding: 2px;
+  text-decoration: none;
+  cursor: pointer;
+
+  &[data-hovered] {
+    color: var(--color-icon-button-hovered);
+  }
+
+  &[data-pressed] {
+    color: var(--color-icon-button-pressed);
+  }
+
+  &[data-disabled] {
+    color: var(--color-icon-button-disabled);
+    cursor: default;
+  }
+
+  &[data-focus-visible] {
+    color: var(--color-focus-visible);
+    background: var(--color-icon-button-background-focused);
+  }
+
+  & > svg {
+    width: 14px;
+    height: 14px;
+    vertical-align: top;
+  }
+}

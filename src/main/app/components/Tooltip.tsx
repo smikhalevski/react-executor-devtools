@@ -1,13 +1,14 @@
-import React, { type ReactNode } from 'react';
-import { TooltipTrigger, Tooltip, OverlayArrow } from 'react-aria-components';
+import React, { ReactNode } from 'react';
+import { OverlayArrow, Tooltip, TooltipTrigger } from 'react-aria-components';
 import css from './Tooltip.module.css';
 
 interface TooltipProps {
   children: ReactNode;
   title: ReactNode;
+  isHidden?: boolean;
 }
 
-export const _Tooltip = (props: TooltipProps) => (
+const __Tooltip = (props: TooltipProps) => (
   <TooltipTrigger>
     {props.children}
     <Tooltip className={css.Tooltip}>
@@ -25,4 +26,4 @@ export const _Tooltip = (props: TooltipProps) => (
   </TooltipTrigger>
 );
 
-export { _Tooltip as Tooltip };
+export { __Tooltip as Tooltip };
