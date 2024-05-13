@@ -1,4 +1,5 @@
 import type { Executor, ExecutorPlugin } from 'react-executor';
+import { MESSAGE_SOURCE_CONTENT, MESSAGE_SOURCE_PANEL } from './constants';
 import { inspect, InspectOptions } from './inspect';
 import {
   ContentMessage,
@@ -18,18 +19,49 @@ import {
   nextUID,
 } from './utils';
 
+/**
+ * The state of the content script.
+ */
 interface ContentState {
+  /**
+   * The unique ID of this content script.
+   */
   readonly originId: string;
-  readonly executors: Map<string, { executor: Executor; plugins: ExecutorPlugins }>;
-  isConnected: boolean;
+
+  /**
+   * Executors managed by the content script.
+   */
+  readonly executorInfos: Map<string, ExecutorInfo>;
+
+  /**
+   * `true` if the devtools panel is opened.
+   */
+  isPanelOpened: boolean;
+
+  /**
+   * The ID of the executor opened in the devtools panel inspector.
+   */
   inspectedId: string | null;
+
+  /**
+   * Inspections rendered for the executor that is opened in the devtools panel inspector.
+   */
   inspections: Record<ExecutorPart, Inspection> | null;
+}
+
+interface ExecutorInfo {
+  executor: Executor;
+
+  /**
+   * Map from a plugin type to corresponding options.
+   */
+  plugins: ExecutorPlugins;
 }
 
 const contentState: ContentState = {
   originId: nextUID(),
-  executors: new Map(),
-  isConnected: false,
+  executorInfos: new Map(),
+  isPanelOpened: false,
   inspectedId: null,
   inspections: null,
 };
@@ -39,18 +71,20 @@ const inspectOptions: InspectOptions = {
     const value = inspection[INSPECTED_VALUE];
 
     if (typeof value === 'function') {
-      inspection.location = { type: 'sourceCode' };
+      // Functions can be revealed in the sources tab
+      inspection.location = { type: 'sourcesTab' };
       return;
     }
 
     if (value === null || typeof value !== 'object') {
+      // Ignore primitives
       return;
     }
 
-    // Lookup a matching executor
-    for (const entry of contentState.executors) {
-      if (entry[1].executor === value) {
-        inspection.location = { type: 'executor', id: entry[0] };
+    // Look up an existing executor
+    for (const [id, executorInfo] of contentState.executorInfos) {
+      if (executorInfo.executor === value) {
+        inspection.location = { type: 'executor', id };
         break;
       }
     }
@@ -58,19 +92,19 @@ const inspectOptions: InspectOptions = {
 };
 
 window.addEventListener('message', event => {
-  if (event.data?.source === 'react_executor_devtools_panel') {
+  if (event.data?.source === MESSAGE_SOURCE_PANEL) {
     receiveMessage(event.data);
   }
 });
 
 window.addEventListener('beforeunload', () => {
-  if (contentState.isConnected) {
+  if (contentState.isPanelOpened) {
     sendMessage({ type: 'content_closed', originId: contentState.originId });
   }
 });
 
 function sendMessage(message: ContentMessage): void {
-  (message as any).source = 'react_executor_devtools_content';
+  (message as any).source = MESSAGE_SOURCE_CONTENT;
 
   log('content_main', message);
   window.postMessage(message, '*');
@@ -81,26 +115,35 @@ function receiveMessage(message: PanelMessage): void {
 
   switch (message.type) {
     case 'panel_opened':
-      contentState.isConnected = true;
+      if (message.originId !== undefined && message.originId !== contentState.originId) {
+        // Ignore if panel is opened for another content script
+        break;
+      }
 
-      for (const entry of contentState.executors) {
-        const details = getExecutorDetails(contentState.originId, entry[1].executor);
+      contentState.isPanelOpened = true;
 
-        sendMessage({ type: 'executor_attached', id: entry[0], details });
+      for (const [id, executorInfo] of contentState.executorInfos) {
+        const details = getExecutorDetails(contentState.originId, executorInfo.executor);
+
+        sendMessage({ type: 'executor_attached', id, details });
       }
       break;
 
     case 'panel_closed':
-      contentState.isConnected = false;
+      contentState.isPanelOpened = false;
       contentState.inspectedId = contentState.inspections = null;
       break;
 
     case 'start_inspection': {
-      const entry = contentState.executors.get(message.id);
+      const executorInfo = contentState.executorInfos.get(message.id);
 
-      if (entry !== undefined) {
+      if (executorInfo !== undefined) {
         contentState.inspectedId = message.id;
-        contentState.inspections = getExecutorPartInspections(entry.executor, entry.plugins, inspectOptions);
+        contentState.inspections = getExecutorPartInspections(
+          executorInfo.executor,
+          executorInfo.plugins,
+          inspectOptions
+        );
 
         sendMessage({ type: 'executor_patched', id: message.id, patch: contentState.inspections });
       }
@@ -117,7 +160,7 @@ function receiveMessage(message: PanelMessage): void {
       if (child !== undefined) {
         window.__REACT_EXECUTOR_DEVTOOLS__.inspectedValue = child[INSPECTED_VALUE];
 
-        sendMessage({ type: 'go_to_inspected_value', url: window.location.href });
+        sendMessage({ type: 'open_sources_tab', url: window.location.href });
       }
       break;
     }
@@ -139,15 +182,15 @@ function receiveMessage(message: PanelMessage): void {
     }
 
     case 'retry_executor':
-      contentState.executors.get(message.id)?.executor.retry();
+      contentState.executorInfos.get(message.id)?.executor.retry();
       break;
 
     case 'invalidate_executor':
-      contentState.executors.get(message.id)?.executor.invalidate();
+      contentState.executorInfos.get(message.id)?.executor.invalidate();
       break;
 
     case 'abort_executor':
-      contentState.executors.get(message.id)?.executor.abort();
+      contentState.executorInfos.get(message.id)?.executor.abort();
       break;
   }
 }
@@ -167,7 +210,7 @@ const devtools: ExecutorPlugin = executor => {
       case 'invalidated':
       case 'activated':
       case 'deactivated':
-        if (contentState.isConnected && contentState.executors.has(id)) {
+        if (contentState.isPanelOpened && contentState.executorInfos.has(id)) {
           sendMessage({ type: 'executor_state_changed', id, stats: getExecutorStats(executor) });
         }
         break;
@@ -177,20 +220,20 @@ const devtools: ExecutorPlugin = executor => {
         break;
 
       case 'attached':
-        contentState.executors.set(id, { executor, plugins });
+        contentState.executorInfos.set(id, { executor, plugins });
 
-        if (contentState.isConnected) {
+        if (contentState.isPanelOpened) {
           sendMessage({ type: 'executor_attached', id, details: getExecutorDetails(contentState.originId, executor) });
         }
         break;
 
       case 'detached':
-        contentState.executors.delete(id);
+        contentState.executorInfos.delete(id);
 
         if (contentState.inspectedId === id) {
           contentState.inspectedId = contentState.inspections = null;
         }
-        if (contentState.isConnected) {
+        if (contentState.isPanelOpened) {
           sendMessage({ type: 'executor_detached', id });
         }
         break;
@@ -198,7 +241,7 @@ const devtools: ExecutorPlugin = executor => {
 
     const { inspections } = contentState;
 
-    if (!contentState.isConnected || contentState.inspectedId !== id || inspections === null) {
+    if (!contentState.isPanelOpened || contentState.inspectedId !== id || inspections === null) {
       return;
     }
 
@@ -240,4 +283,4 @@ const devtools: ExecutorPlugin = executor => {
 
 window.__REACT_EXECUTOR_DEVTOOLS__ = { plugin: devtools };
 
-sendMessage({ type: 'content_opened' });
+sendMessage({ type: 'content_opened', originId: contentState.originId });

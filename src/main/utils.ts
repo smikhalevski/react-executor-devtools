@@ -53,7 +53,7 @@ export function getExecutorDetails(originId: string, executor: Executor): Execut
 
 export function getExecutorPartInspections(
   executor: Executor,
-  plugins: ExecutorPlugins,
+  plugins: ExecutorPlugins | undefined,
   options: InspectOptions
 ): Record<ExecutorPart, Inspection> {
   return {

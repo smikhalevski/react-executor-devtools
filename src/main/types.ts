@@ -37,8 +37,8 @@ export interface Inspection {
  */
 export type Location =
   | { type: 'executor'; id: string }
-  // The inspected value can be located in source code through the go_to_part_definition event
-  | { type: 'sourceCode' };
+  // The inspected value can be located in source code through the 'go_to_part_definition' event
+  | { type: 'sourcesTab' };
 
 export interface ExecutorStats {
   settledAt: number;
@@ -69,10 +69,13 @@ export type ExecutorPart = 'key' | 'value' | 'reason' | 'task' | 'annotations' |
 
 export type ExecutorPatch = Partial<Record<ExecutorPart, Inspection>>;
 
+/**
+ * Map from the plugin type to options.
+ */
 export type ExecutorPlugins = { [key: string]: unknown };
 
 export type PanelMessage =
-  | { type: 'panel_opened' }
+  | { type: 'panel_opened'; originId: string | undefined }
   | { type: 'panel_closed' }
   | { type: 'start_inspection'; id: string }
   | { type: 'retry_executor'; id: string }
@@ -82,10 +85,10 @@ export type PanelMessage =
   | { type: 'go_to_part_definition'; id: string; part: ExecutorPart; path: number[] };
 
 export type ContentMessage =
-  | { type: 'content_opened' }
+  | { type: 'content_opened'; originId: string }
   | { type: 'content_closed'; originId: string }
   | { type: 'executor_attached'; id: string; details: ExecutorDetails }
   | { type: 'executor_detached'; id: string }
   | { type: 'executor_state_changed'; id: string; stats: ExecutorStats }
   | { type: 'executor_patched'; id: string; patch: ExecutorPatch }
-  | { type: 'go_to_inspected_value'; url: string };
+  | { type: 'open_sources_tab'; url: string };

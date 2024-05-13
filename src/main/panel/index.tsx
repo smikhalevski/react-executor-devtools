@@ -2,6 +2,7 @@ import './index.css';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { ExecutorManagerProvider } from 'react-executor';
+import { MESSAGE_SOURCE_PANEL } from '../constants';
 import type { ContentMessage, ExecutorPart, PanelMessage } from '../types';
 import { log } from '../utils';
 import { App } from './App';
@@ -26,7 +27,7 @@ window.addEventListener('beforeunload', () => {
 
 function sendMessage(message: PanelMessage): void {
   if (chrome.runtime.id !== undefined) {
-    (message as any).source = 'react_executor_devtools_panel';
+    (message as any).source = MESSAGE_SOURCE_PANEL;
 
     log('panel', message);
     chrome.tabs.sendMessage(chrome.devtools.inspectedWindow.tabId, message);
@@ -37,11 +38,28 @@ function receiveMessage(message: ContentMessage): void {
   log('content_main', message);
 
   switch (message.type) {
+    case 'content_opened':
+      sendMessage({ type: 'panel_opened', originId: message.originId });
+      break;
+
+    case 'content_closed': {
+      const inspector = inspectorExecutor.get();
+      const list = listExecutor.get().filter(item => item.originId !== message.originId);
+
+      if (inspector !== null && list.every(item => item.id !== inspector.id)) {
+        // Inspected executor was detached
+        inspectorExecutor.resolve(null);
+      }
+
+      listExecutor.resolve(list);
+      break;
+    }
+
     case 'executor_attached': {
       const list = listExecutor.get();
 
       if (list.some(item => item.id === message.id)) {
-        // Already exists
+        // Executor already exists
         break;
       }
 
@@ -90,22 +108,7 @@ function receiveMessage(message: ContentMessage): void {
       break;
     }
 
-    case 'content_opened':
-      sendMessage({ type: 'panel_opened' });
-      break;
-
-    case 'content_closed': {
-      const inspector = inspectorExecutor.get();
-      const list = listExecutor.get().filter(item => item.originId !== message.originId);
-
-      if (inspector !== null && list.every(item => item.id !== inspector.id)) {
-        inspectorExecutor.resolve(null);
-      }
-      listExecutor.resolve(list);
-      break;
-    }
-
-    case 'go_to_inspected_value':
+    case 'open_sources_tab':
       chrome.devtools.inspectedWindow.eval(
         `
         if (__REACT_EXECUTOR_DEVTOOLS__.inspectedValue !== undefined) {
@@ -147,7 +150,7 @@ const contentClient: ContentClient = {
   },
 };
 
-sendMessage({ type: 'panel_opened' });
+sendMessage({ type: 'panel_opened', originId: undefined });
 
 ReactDOM.createRoot(document.getElementById('container')!).render(
   <ExecutorManagerProvider value={executorManager}>
