@@ -1,7 +1,7 @@
 import { clsx } from 'clsx';
 import React, { useState } from 'react';
-import { ChevronIcon } from '../../gen/icons/ChevronIcon';
-import { EyeIcon } from '../../gen/icons/EyeIcon';
+import { ChevronIcon } from '../gen/icons/ChevronIcon';
+import { EyeIcon } from '../gen/icons/EyeIcon';
 import type { Inspection, Location } from '../../types';
 import { useInspector } from '../executors';
 import css from './InspectionView.module.css';

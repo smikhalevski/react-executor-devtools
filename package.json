@@ -9,11 +9,11 @@
   "sideEffects": false,
   "scripts": {
     "build": "npm run build:icons && npm run build:panel && npm run build:devtools",
-    "build:icons": "svgr src/main/icons",
+    "build:icons": "svgr src/main/app/icons",
     "build:panel": "vite build",
     "build:devtools": "cp -R src/main/static/ build/ && cp LICENSE.txt build/ && rollup --config",
     "start": "vite",
-    "clean": "rimraf src/main/gen build coverage",
+    "clean": "rimraf src/main/app/gen build coverage",
     "test": "jest"
   },
   "repository": {
@@ -46,6 +46,7 @@
   },
   "dependencies": {
     "clsx": "^2.1.1",
+    "modern-normalize": "^2.0.0",
     "react": "^18.3.1",
     "react-aria-components": "^1.2.0",
     "react-dom": "^18.3.1",

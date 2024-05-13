@@ -1,11 +1,11 @@
 import { defineConfig } from 'vite';
 
-export default defineConfig(({ command }) => {
+export default defineConfig(env => {
   return {
-    root: command === 'serve' ? './src/main/panel/dev' : './src/main/panel',
+    root: './src/main',
     build: {
       minify: false,
-      outDir: '../../../build',
+      outDir: '../../build',
       assetsDir: '.',
       emptyOutDir: false,
       modulePreload: {
@@ -14,6 +14,7 @@ export default defineConfig(({ command }) => {
     },
     resolve: {
       preserveSymlinks: true,
+      alias: [{ find: /panel\.tsx$/, replacement: env.command === 'serve' ? 'panel.dev.tsx' : 'panel.tsx' }],
     },
   };
 });

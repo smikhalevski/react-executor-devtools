@@ -10,7 +10,7 @@ export function log(...args: any[]): void {
  * Returns a unique ID that can be shared between the content script and the panel script.
  */
 export function nextUID(): string {
-  return Date.now().toString(16) + ((Math.random() * 0x7fffffff) | 0).toString(16).padStart(7, '0');
+  return Date.now().toString(16) + ((Math.random() * 0x7fffffff) | 0).toString(16).padStart(8, '0');
 }
 
 /**

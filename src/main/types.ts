@@ -4,6 +4,11 @@ export const INSPECTED_VALUE = Symbol('inspectedValue');
  * The result of the value inspection.
  */
 export interface Inspection {
+  /**
+   * The original inspected value.
+   *
+   * **Note:** Available only in the content script.
+   */
   [INSPECTED_VALUE]: unknown;
 
   /**

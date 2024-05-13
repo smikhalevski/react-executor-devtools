@@ -1,19 +1,19 @@
-import './index.css';
+import './app/index.css';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { ExecutorManagerProvider } from 'react-executor';
-import { MESSAGE_SOURCE_PANEL } from '../constants';
-import type { ContentMessage, ExecutorPart, PanelMessage } from '../types';
-import { log } from '../utils';
-import { App } from './App';
+import { MESSAGE_SOURCE_PANEL } from './constants';
+import type { ContentMessage, ExecutorPart, PanelMessage } from './types';
+import { log } from './utils';
+import { App } from './app/App';
 import {
   executorManager,
   getDetailsExecutor,
   getPartInspectionExecutor,
   inspectorExecutor,
   listExecutor,
-} from './executors';
-import { type ContentClient, ContentClientProvider } from './useContentClient';
+} from './app/executors';
+import { ContentClient, ContentClientProvider } from './app/useContentClient';
 
 chrome.runtime.onMessage.addListener((message, sender) => {
   if (sender.id === chrome.runtime.id && sender.tab?.id === chrome.devtools.inspectedWindow.tabId) {

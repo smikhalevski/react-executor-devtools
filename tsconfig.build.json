@@ -4,6 +4,8 @@
     "./src/main/**/*"
   ],
   "exclude": [
-    "./src/main/panel"
+    "./src/main/app",
+    "./src/main/gen",
+    "./src/main/panel*"
   ]
 }

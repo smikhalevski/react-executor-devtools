@@ -1,3 +1,5 @@
+@import 'modern-normalize/modern-normalize.css';
+
 :root {
     --font-size-monospace-small: 9px;
     --font-size-monospace-normal: 11px;
@@ -192,6 +194,28 @@
             color: white;
         }
     }
+}
+
+html {
+    display: flex;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    flex: 1;
+    display: flex;
+}
+
+#container {
+    display: flex;
+    flex: 1;
+    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
 }
 
 body {

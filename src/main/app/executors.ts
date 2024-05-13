@@ -17,12 +17,14 @@ export const listExecutor = executorManager.getOrCreate<ListItem[]>('list', []);
 
 export const inspectorExecutor = executorManager.getOrCreate<Inspector | null>('inspector', null);
 
+const plugins = [detachDeactivated(0)];
+
 export function getDetailsExecutor(id: string): Executor<ExecutorDetails> {
-  return executorManager.getOrCreate('details' + id, undefined, [detachDeactivated(0)]);
+  return executorManager.getOrCreate(`details_${id}`, undefined, plugins);
 }
 
 export function getPartInspectionExecutor(id: string, part: ExecutorPart): Executor<Inspection | null> {
-  return executorManager.getOrCreate<Inspection | null>('inspection' + id + part, null, [detachDeactivated(0)]);
+  return executorManager.getOrCreate<Inspection | null>(`inspection_${id}_${part}`, null, plugins);
 }
 
 export function useInspector(): Inspector | null {

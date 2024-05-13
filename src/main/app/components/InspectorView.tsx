@@ -1,5 +1,5 @@
 import React, { Fragment, type ReactNode } from 'react';
-import { WarningIcon } from '../../gen/icons/WarningIcon';
+import { WarningIcon } from '../gen/icons/WarningIcon';
 import type { ExecutorPart, Location } from '../../types';
 import { useDetails, useInspector, usePartInspection } from '../executors';
 import { useContentClient } from '../useContentClient';
@@ -190,6 +190,8 @@ interface TaskInspectionViewProps {
 
 const TaskInspectionView = ({ id, noDataLabel }: TaskInspectionViewProps) => {
   const details = useDetails(id);
+
+  usePartInspection(id, 'task');
 
   if (!details.stats.hasTask) {
     return <div className={css.NoData}>{noDataLabel}</div>;

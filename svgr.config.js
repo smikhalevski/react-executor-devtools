@@ -1,6 +1,6 @@
 module.exports = {
   typescript: true,
-  outDir: './src/main/gen/icons',
+  outDir: './src/main/app/gen/icons',
   jsxRuntime: 'automatic',
   index: false,
   svgProps: {
