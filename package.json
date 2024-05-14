@@ -7,6 +7,9 @@
   "module": "./index.mjs",
   "types": "./index.d.ts",
   "sideEffects": false,
+  "config": {
+    "manifest": "./src/main/static/manifest.json"
+  },
   "scripts": {
     "build": "npm run build:icons && npm run build:panel && npm run build:devtools",
     "build:icons": "svgr src/main/app/icons",
@@ -14,7 +17,8 @@
     "build:devtools": "cp -R src/main/static/ build/ && cp LICENSE.txt build/ && rollup --config",
     "start": "vite",
     "clean": "rimraf src/main/app/gen build coverage",
-    "test": "jest"
+    "test": "jest",
+    "prepare-release": "prepare_release() { version=$(npm --no-git-tag-version version \"$@\") && node -e \"var manifest=require('$npm_package_config_manifest'); manifest.version='${version:1}'; require('fs').writeFileSync('$npm_package_config_manifest',JSON.stringify(manifest,null,2))\" && git add . && git commit -m ${version:1} && git tag $version; }; prepare_release"
   },
   "repository": {
     "type": "git",
