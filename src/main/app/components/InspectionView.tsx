@@ -53,7 +53,7 @@ export const InspectionView = (props: InspectionViewProps) => {
             <Tooltip title={'Go to definition'}>
               <IconButton
                 className={css.Spacer}
-                isDisabled={location.type === 'executor' && location.id === inspector?.id}
+                isDisabled={location.type === 'executor' && location.executorId === inspector?.executorId}
                 onPress={() => {
                   onGoToLocation(location, path);
                 }}

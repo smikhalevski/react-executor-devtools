@@ -2,9 +2,6 @@ import './app/index.css';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { ExecutorManagerProvider } from 'react-executor';
-import { MESSAGE_SOURCE_PANEL } from './constants';
-import type { ContentMessage, ExecutorPart, PanelMessage } from './types';
-import { log } from './utils';
 import { App } from './app/App';
 import {
   executorManager,
@@ -14,10 +11,11 @@ import {
   listExecutor,
 } from './app/executors';
 import { ContentClient, ContentClientProvider } from './app/useContentClient';
+import { ContentMessage, ExecutorPart, PanelMessage } from './types';
 
 chrome.runtime.onMessage.addListener((message, sender) => {
-  if (sender.id === chrome.runtime.id && sender.tab?.id === chrome.devtools.inspectedWindow.tabId) {
-    receiveMessage(message);
+  if (sender.documentId !== undefined && sender.tab?.id === chrome.devtools.inspectedWindow.tabId) {
+    receiveContentMessage(message, sender.documentId);
   }
 });
 
@@ -27,26 +25,21 @@ window.addEventListener('beforeunload', () => {
 
 function sendMessage(message: PanelMessage): void {
   if (chrome.runtime.id !== undefined) {
-    (message as any).source = MESSAGE_SOURCE_PANEL;
-
-    log('panel', message);
     chrome.tabs.sendMessage(chrome.devtools.inspectedWindow.tabId, message);
   }
 }
 
-function receiveMessage(message: ContentMessage): void {
-  log('content_main', message);
-
+function receiveContentMessage(message: ContentMessage, documentId: string): void {
   switch (message.type) {
     case 'content_opened':
-      sendMessage({ type: 'panel_opened', originId: message.originId });
+      sendMessage({ type: 'panel_opened' });
       break;
 
     case 'content_closed': {
       const inspector = inspectorExecutor.get();
-      const list = listExecutor.get().filter(item => item.originId !== message.originId);
+      const list = listExecutor.get().filter(item => item.documentId !== documentId);
 
-      if (inspector !== null && list.every(item => item.id !== inspector.id)) {
+      if (inspector !== null && list.every(item => item.executorId !== inspector.executorId)) {
         // Inspected executor was detached
         inspectorExecutor.resolve(null);
       }
@@ -58,23 +51,23 @@ function receiveMessage(message: ContentMessage): void {
     case 'executor_attached': {
       const list = listExecutor.get();
 
-      if (list.some(item => item.id === message.id)) {
+      if (list.some(item => item.executorId === message.executorId)) {
         // Executor already exists
         break;
       }
 
-      list.push({ id: message.id, originId: message.details.originId });
+      list.push({ executorId: message.executorId, documentId });
       listExecutor.resolve(list);
 
-      getDetailsExecutor(message.id).resolve(message.details);
+      getDetailsExecutor(message.executorId).resolve(message.details);
       break;
     }
 
     case 'executor_detached': {
       const list = listExecutor.get();
-      const index = list.findIndex(item => item.id === message.id);
+      const index = list.findIndex(item => item.executorId === message.executorId);
 
-      if (inspectorExecutor.value?.id === message.id) {
+      if (inspectorExecutor.value?.executorId === message.executorId) {
         inspectorExecutor.resolve(null);
       }
       if (index !== -1) {
@@ -85,7 +78,7 @@ function receiveMessage(message: ContentMessage): void {
     }
 
     case 'executor_state_changed': {
-      const detailsExecutor = getDetailsExecutor(message.id);
+      const detailsExecutor = getDetailsExecutor(message.executorId);
       const details = detailsExecutor.get();
 
       Object.assign(details.stats, message.stats);
@@ -95,14 +88,14 @@ function receiveMessage(message: ContentMessage): void {
     }
 
     case 'executor_patched': {
-      if (inspectorExecutor.value?.id !== message.id) {
+      if (inspectorExecutor.value?.executorId !== message.executorId) {
         break;
       }
       for (const part in message.patch) {
         const inspection = message.patch[part as ExecutorPart];
 
         if (inspection !== undefined) {
-          getPartInspectionExecutor(message.id, part as ExecutorPart).resolve(inspection);
+          getPartInspectionExecutor(message.executorId, part as ExecutorPart).resolve(inspection);
         }
       }
       break;
@@ -123,34 +116,34 @@ function receiveMessage(message: ContentMessage): void {
 }
 
 const contentClient: ContentClient = {
-  startInspection(id) {
-    inspectorExecutor.resolve({ id });
+  startInspection(executorId) {
+    inspectorExecutor.resolve({ executorId });
 
-    sendMessage({ type: 'start_inspection', id });
+    sendMessage({ type: 'start_inspection', executorId });
   },
 
-  goToDefinition(id, part, path) {
-    sendMessage({ type: 'go_to_part_definition', id, part, path });
+  goToDefinition(executorId, part, path) {
+    sendMessage({ type: 'go_to_part_definition', executorId, part, path });
   },
 
-  retryExecutor(id) {
-    sendMessage({ type: 'retry_executor', id });
+  retryExecutor(executorId) {
+    sendMessage({ type: 'retry_executor', executorId });
   },
 
-  invalidateExecutor(id) {
-    sendMessage({ type: 'invalidate_executor', id });
+  invalidateExecutor(executorId) {
+    sendMessage({ type: 'invalidate_executor', executorId });
   },
 
-  abortExecutor(id) {
-    sendMessage({ type: 'abort_executor', id });
+  abortExecutor(executorId) {
+    sendMessage({ type: 'abort_executor', executorId });
   },
 
-  inspectChildren(id, part, path) {
-    sendMessage({ type: 'inspect_children', id, part, path });
+  inspectChildren(executorId, part, path) {
+    sendMessage({ type: 'inspect_children', executorId, part, path });
   },
 };
 
-sendMessage({ type: 'panel_opened', originId: undefined });
+sendMessage({ type: 'panel_opened' });
 
 ReactDOM.createRoot(document.getElementById('container')!).render(
   <ExecutorManagerProvider value={executorManager}>

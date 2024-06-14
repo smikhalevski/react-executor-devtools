@@ -3,12 +3,12 @@ import detachDeactivated from 'react-executor/plugin/detachDeactivated';
 import type { ExecutorDetails, ExecutorPart, Inspection } from '../types';
 
 interface Inspector {
-  id: string;
+  executorId: string;
 }
 
 interface ListItem {
-  id: string;
-  originId: string;
+  executorId: string;
+  documentId: string;
 }
 
 export const executorManager = new ExecutorManager();
@@ -19,12 +19,12 @@ export const inspectorExecutor = executorManager.getOrCreate<Inspector | null>('
 
 const plugins = [detachDeactivated(0)];
 
-export function getDetailsExecutor(id: string): Executor<ExecutorDetails> {
-  return executorManager.getOrCreate(`details_${id}`, undefined, plugins);
+export function getDetailsExecutor(executorId: string): Executor<ExecutorDetails> {
+  return executorManager.getOrCreate(`details_${executorId}`, undefined, plugins);
 }
 
-export function getPartInspectionExecutor(id: string, part: ExecutorPart): Executor<Inspection | null> {
-  return executorManager.getOrCreate<Inspection | null>(`inspection_${id}_${part}`, null, plugins);
+export function getPartInspectionExecutor(executorId: string, part: ExecutorPart): Executor<Inspection | null> {
+  return executorManager.getOrCreate<Inspection | null>(`inspection_${executorId}_${part}`, null, plugins);
 }
 
 export function useInspector(): Inspector | null {
@@ -37,14 +37,14 @@ export function useList(): ListItem[] {
   return listExecutor.get();
 }
 
-export function useDetails(id: string): ExecutorDetails {
-  const executor = getDetailsExecutor(id);
+export function useDetails(executorId: string): ExecutorDetails {
+  const executor = getDetailsExecutor(executorId);
   useExecutorSubscription(executor);
   return executor.get();
 }
 
-export function usePartInspection(id: string, part: ExecutorPart): Inspection | null {
-  const executor = getPartInspectionExecutor(id, part);
+export function usePartInspection(executorId: string, part: ExecutorPart): Inspection | null {
+  const executor = getPartInspectionExecutor(executorId, part);
   useExecutorSubscription(executor);
   return executor.get();
 }

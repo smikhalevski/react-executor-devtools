@@ -41,7 +41,7 @@ export interface Inspection {
  * The location of the inspected value to which user can navigate from the inspection.
  */
 export type Location =
-  | { type: 'executor'; id: string }
+  | { type: 'executor'; executorId: string }
   // The inspected value can be located in source code through the 'go_to_part_definition' event
   | { type: 'sourcesTab' };
 
@@ -59,10 +59,6 @@ export interface ExecutorStats {
 }
 
 export interface ExecutorDetails {
-  /**
-   * The unique ID of the frame where the executor was created.
-   */
-  originId: string;
   keyPreview: string;
   stats: ExecutorStats;
 }
@@ -79,21 +75,27 @@ export type ExecutorPatch = Partial<Record<ExecutorPart, Inspection>>;
  */
 export type ExecutorPlugins = { [key: string]: unknown };
 
+/**
+ * panel -> content, content_main
+ */
 export type PanelMessage =
-  | { type: 'panel_opened'; originId: string | undefined }
-  | { type: 'panel_closed' }
-  | { type: 'start_inspection'; id: string }
-  | { type: 'retry_executor'; id: string }
-  | { type: 'invalidate_executor'; id: string }
-  | { type: 'abort_executor'; id: string }
-  | { type: 'inspect_children'; id: string; part: ExecutorPart; path: number[] }
-  | { type: 'go_to_part_definition'; id: string; part: ExecutorPart; path: number[] };
+  | { source?: string; type: 'panel_opened' }
+  | { source?: string; type: 'panel_closed' }
+  | { source?: string; type: 'start_inspection'; executorId: string }
+  | { source?: string; type: 'retry_executor'; executorId: string }
+  | { source?: string; type: 'invalidate_executor'; executorId: string }
+  | { source?: string; type: 'abort_executor'; executorId: string }
+  | { source?: string; type: 'inspect_children'; executorId: string; part: ExecutorPart; path: number[] }
+  | { source?: string; type: 'go_to_part_definition'; executorId: string; part: ExecutorPart; path: number[] };
 
+/**
+ * content, content_main -> panel
+ */
 export type ContentMessage =
-  | { type: 'content_opened'; originId: string }
-  | { type: 'content_closed'; originId: string }
-  | { type: 'executor_attached'; id: string; details: ExecutorDetails }
-  | { type: 'executor_detached'; id: string }
-  | { type: 'executor_state_changed'; id: string; stats: ExecutorStats }
-  | { type: 'executor_patched'; id: string; patch: ExecutorPatch }
-  | { type: 'open_sources_tab'; url: string };
+  | { source?: string; type: 'content_opened' }
+  | { source?: string; type: 'content_closed' }
+  | { source?: string; type: 'executor_attached'; executorId: string; details: ExecutorDetails }
+  | { source?: string; type: 'executor_detached'; executorId: string }
+  | { source?: string; type: 'executor_state_changed'; executorId: string; stats: ExecutorStats }
+  | { source?: string; type: 'executor_patched'; executorId: string; patch: ExecutorPatch }
+  | { source?: string; type: 'open_sources_tab'; url: string };

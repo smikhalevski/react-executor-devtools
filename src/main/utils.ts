@@ -2,9 +2,7 @@ import type { Executor } from 'react-executor';
 import { getValuePreview, inspect, InspectOptions } from './inspect';
 import { ExecutorDetails, ExecutorPart, ExecutorPlugins, ExecutorStats, INSPECTED_VALUE, Inspection } from './types';
 
-export function log(...args: any[]): void {
-  // console.log(...args);
-}
+export function noop(): void {}
 
 /**
  * Returns a unique ID that can be shared between the content script and the panel script.
@@ -43,9 +41,8 @@ export function getInspectionChild(
   return inspection;
 }
 
-export function getExecutorDetails(originId: string, executor: Executor): ExecutorDetails {
+export function getExecutorDetails(executor: Executor): ExecutorDetails {
   return {
-    originId,
     keyPreview: getValuePreview(executor.key, 2),
     stats: getExecutorStats(executor),
   };

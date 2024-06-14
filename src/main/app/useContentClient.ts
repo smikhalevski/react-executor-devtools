@@ -8,49 +8,49 @@ export interface ContentClient {
   /**
    * Notify that the executor was selected to be inspected and part inspections must be provided.
    *
-   * @param id The ID of the inspected executor.
+   * @param executorId The ID of the inspected executor.
    */
-  startInspection(id: string): void;
+  startInspection(executorId: string): void;
 
   /**
    * Open the definition of the inspected value, that is stored in the particular part of the executor at given path
    * inside the inspection.
    *
-   * @param id The ID of the inspected executor.
+   * @param executorId The ID of the inspected executor.
    * @param part The executor part where the inspected value is stored.
    * @param path The path inside the inspection.
    */
-  goToDefinition(id: string, part: ExecutorPart, path: number[]): void;
+  goToDefinition(executorId: string, part: ExecutorPart, path: number[]): void;
 
   /**
    * Retry the executor.
    *
-   * @param id The ID of the executor.
+   * @param executorId The ID of the executor.
    */
-  retryExecutor(id: string): void;
+  retryExecutor(executorId: string): void;
 
   /**
    * Invalidate the executor.
    *
-   * @param id The ID of the executor.
+   * @param executorId The ID of the executor.
    */
-  invalidateExecutor(id: string): void;
+  invalidateExecutor(executorId: string): void;
 
   /**
    * Abort the executor.
    *
-   * @param id The ID of the executor.
+   * @param executorId The ID of the executor.
    */
-  abortExecutor(id: string): void;
+  abortExecutor(executorId: string): void;
 
   /**
    * Notify that properties of the value in the particular executor part at given index must be inspected.
    *
-   * @param id The ID of the inspected executor.
+   * @param executorId The ID of the inspected executor.
    * @param part The executor part where the inspected value is stored.
    * @param path The path inside the inspection.
    */
-  inspectChildren(id: string, part: ExecutorPart, path: number[]): void;
+  inspectChildren(executorId: string, part: ExecutorPart, path: number[]): void;
 }
 
 const ContentClientContext = createContext<ContentClient | null>(null);

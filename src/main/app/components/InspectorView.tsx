@@ -17,42 +17,42 @@ export const InspectorView = () => {
   }
 
   return (
-    <Fragment key={inspector.id}>
+    <Fragment key={inspector.executorId}>
       <Section title={'Key'}>
         <PartInspectionView
-          id={inspector.id}
+          id={inspector.executorId}
           part={'key'}
         />
       </Section>
 
       <Section title={'Status'}>
-        <DetailsView id={inspector.id} />
+        <DetailsView id={inspector.executorId} />
       </Section>
 
       <Section title={'Value'}>
         <PartInspectionView
-          id={inspector.id}
+          id={inspector.executorId}
           part={'value'}
         />
       </Section>
 
       <Section title={'Reason'}>
         <PartInspectionView
-          id={inspector.id}
+          id={inspector.executorId}
           part={'reason'}
         />
       </Section>
 
       <Section title={'Task'}>
         <TaskInspectionView
-          id={inspector.id}
+          id={inspector.executorId}
           noDataLabel={'No task'}
         />
       </Section>
 
       <Section title={'Plugins'}>
         <PartInspectionView
-          id={inspector.id}
+          id={inspector.executorId}
           part={'plugins'}
           isExploded={true}
           noDataLabel={'No plugins'}
@@ -61,7 +61,7 @@ export const InspectorView = () => {
 
       <Section title={'Annotations'}>
         <PartInspectionView
-          id={inspector.id}
+          id={inspector.executorId}
           part={'annotations'}
           isExploded={true}
           noDataLabel={'No annotations'}
@@ -169,7 +169,7 @@ const PartInspectionView = ({ id, part, noDataLabel, isExploded }: PartInspectio
 
   const handleGoToLocation = (location: Location, path: number[]) => {
     if (location.type === 'executor') {
-      contentClient.startInspection(location.id);
+      contentClient.startInspection(location.executorId);
     } else {
       contentClient.goToDefinition(id, part, path);
     }

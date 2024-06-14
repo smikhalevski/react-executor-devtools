@@ -43,7 +43,7 @@ interface ExecutorMock {
   plugins?: unknown;
 }
 
-const executorMocks: { [id: string]: ExecutorMock } = {
+const executorMocks: { [executorId: string]: ExecutorMock } = {
   [nextUID()]: {
     key: ['user', 1],
     value: userMock,
@@ -92,11 +92,10 @@ const executorMocks: { [id: string]: ExecutorMock } = {
   },
 };
 
-const contentOrigin = nextUID();
+const DOCUMENT_ID = nextUID();
 
-for (const [id, executor] of Object.entries(executorMocks)) {
-  getDetailsExecutor(id).resolve({
-    originId: contentOrigin,
+for (const [executorId, executor] of Object.entries(executorMocks)) {
+  getDetailsExecutor(executorId).resolve({
     keyPreview: getValuePreview(executor.key),
     stats: {
       settledAt: executor.settledAt || 0,
@@ -109,30 +108,30 @@ for (const [id, executor] of Object.entries(executorMocks)) {
   });
 }
 
-listExecutor.resolve(Object.keys(executorMocks).map(id => ({ id, originId: contentOrigin })));
+listExecutor.resolve(Object.keys(executorMocks).map(executorId => ({ executorId, documentId: DOCUMENT_ID })));
 
 const contentClient: ContentClient = {
-  startInspection(id) {
-    inspectorExecutor.resolve({ id });
+  startInspection(executorId) {
+    inspectorExecutor.resolve({ executorId: executorId });
 
-    getPartInspectionExecutor(id, 'key').resolve(inspect(executorMocks[id].key, 0));
-    getPartInspectionExecutor(id, 'value').resolve(inspect(executorMocks[id].value, 0));
-    getPartInspectionExecutor(id, 'reason').resolve(inspect(executorMocks[id].reason, 0));
-    getPartInspectionExecutor(id, 'task').resolve(inspect(undefined, 0));
-    getPartInspectionExecutor(id, 'plugins').resolve(inspect(executorMocks[id].plugins, 0));
-    getPartInspectionExecutor(id, 'annotations').resolve(inspect(executorMocks[id].annotations, 0));
+    getPartInspectionExecutor(executorId, 'key').resolve(inspect(executorMocks[executorId].key, 0));
+    getPartInspectionExecutor(executorId, 'value').resolve(inspect(executorMocks[executorId].value, 0));
+    getPartInspectionExecutor(executorId, 'reason').resolve(inspect(executorMocks[executorId].reason, 0));
+    getPartInspectionExecutor(executorId, 'task').resolve(inspect(undefined, 0));
+    getPartInspectionExecutor(executorId, 'plugins').resolve(inspect(executorMocks[executorId].plugins, 0));
+    getPartInspectionExecutor(executorId, 'annotations').resolve(inspect(executorMocks[executorId].annotations, 0));
   },
 
-  goToDefinition(id, path, part) {},
+  goToDefinition(executorId, path, part) {},
 
-  retryExecutor(id) {},
+  retryExecutor(executorId) {},
 
-  invalidateExecutor(id) {},
+  invalidateExecutor(executorId) {},
 
-  abortExecutor(id) {},
+  abortExecutor(executorId) {},
 
-  inspectChildren(id, part, path) {
-    const inspectionExecutor = getPartInspectionExecutor(id, part);
+  inspectChildren(executorId, part, path) {
+    const inspectionExecutor = getPartInspectionExecutor(executorId, part);
     const inspection = inspectionExecutor.get();
 
     if (inspection === null) {

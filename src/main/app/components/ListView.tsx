@@ -10,8 +10,8 @@ export const ListView = () => {
 
   return list.map(item => (
     <ListItemView
-      id={item.id}
-      key={item.id}
+      id={item.executorId}
+      key={item.executorId}
     />
   ));
 };
@@ -29,7 +29,7 @@ const ListItemView = ({ id }: ListItemProps) => {
     <div
       className={clsx(
         css.ListItem,
-        id === inspector?.id && css.SelectedListItem,
+        id === inspector?.executorId && css.SelectedListItem,
         !details.stats.isActive && css.DeactivatedListItem
       )}
       onClick={() => {
