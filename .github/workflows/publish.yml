@@ -27,9 +27,16 @@ jobs:
           path: build
 
       - name: Publish extension
-        run:
-          zip -r build build
-          npx --yes chrome-webstore-upload-cli@3.1.0 upload --auto-publish --source build.zip
+        run: |
+          zip --recurse-paths ../build.zip .
+          unzip -l ../build.zip
+          npx --yes chrome-webstore-upload-cli@3.3.0 --source ../build.zip
+        working-directory: build
+        env:
+          EXTENSION_ID: ${{ vars.EXTENSION_ID }}
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          REFRESH_TOKEN: ${{ secrets.REFRESH_TOKEN }}
 
       - name: Create release draft
         run: gh release create ${{ github.ref_name }} --generate-notes --draft
