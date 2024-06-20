@@ -61,10 +61,6 @@
   color: var(--color-value-preview-deactivated);
 }
 
-.Hidden {
-  display: none;
-}
-
 .Spacer {
   margin-inline-end: 4px;
 }

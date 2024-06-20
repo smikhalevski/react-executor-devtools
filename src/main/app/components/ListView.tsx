@@ -1,7 +1,7 @@
 import { clsx } from 'clsx';
 import React, { useState } from 'react';
 import { Input, ListBox, ListBoxItem, Selection } from 'react-aria-components';
-import { useDetails, useList } from '../executors';
+import { ListItem, useDetails, useList } from '../executors';
 import { useContentClient } from '../useContentClient';
 import css from './ListView.module.css';
 import { StatsIndicator } from './StatsIndicator';
@@ -11,7 +11,6 @@ export const ListView = () => {
   const contentClient = useContentClient();
   const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set());
   const [search, setSearch] = useState('');
-  const pattern = createSearchPattern(search);
 
   const handleSelectionChange = (keys: Selection) => {
     setSelectedKeys(keys);
@@ -37,9 +36,7 @@ export const ListView = () => {
       <ListBox
         aria-label={'Executor list'}
         className={css.ListBox}
-        items={list.filter(item =>
-          typeof pattern === 'string' ? item.searchableString.includes(pattern) : pattern.test(item.searchableString)
-        )}
+        items={list.filter(createListItemFilter(search))}
         selectedKeys={selectedKeys}
         selectionMode={'single'}
         selectionBehavior={'replace'}
@@ -73,9 +70,14 @@ const ListItemView = ({ id }: ListItemViewProps) => {
   );
 };
 
-function createSearchPattern(search: string): string | RegExp {
-  if (search.length > 1 && search.startsWith('/') && search.endsWith('/')) {
-    return new RegExp(search.slice(1, -1), 'i');
+function createListItemFilter(search: string): (item: ListItem) => boolean {
+  if (search.length > 1 && search[0] === '/' && search[search.length - 1] === '/') {
+    const regExp = new RegExp(search.slice(1, -1), 'i');
+
+    return item => regExp.test(item.searchableString);
   }
-  return search.toLowerCase();
+
+  search = search.toLowerCase();
+
+  return item => item.searchableString.includes(search);
 }

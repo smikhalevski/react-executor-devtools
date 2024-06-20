@@ -3,14 +3,14 @@ import detachDeactivated from 'react-executor/plugin/detachDeactivated';
 import synchronizeStorage from 'react-executor/plugin/synchronizeStorage';
 import type { ExecutorDetails, ExecutorPart, Inspection } from '../types';
 
-interface Inspector {
+export interface Inspector {
   /**
    * The ID of currently inspected executor.
    */
   executorId: string;
 }
 
-interface ListItem {
+export interface ListItem {
   executorId: string;
 
   /**
