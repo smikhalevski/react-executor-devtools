@@ -55,7 +55,7 @@
     "react": "^18.3.1",
     "react-aria-components": "^1.2.1",
     "react-dom": "^18.3.1",
-    "react-executor": "^0.0.15",
+    "react-executor": "^0.0.16",
     "react-hookers": "^6.0.0"
   }
 }
