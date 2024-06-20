@@ -23,18 +23,16 @@ export const ListView = () => {
 
   return (
     <>
-      <div className={css.SearchBlock}>
-        <Input
-          className={css.SearchInput}
-          type={'search'}
-          placeholder={'Search (text or /regex/)'}
-          value={search}
-          onChange={event => {
-            setSelectedKeys(new Set());
-            setSearch(event.target.value);
-          }}
-        />
-      </div>
+      <Input
+        className={css.SearchInput}
+        type={'search'}
+        placeholder={'Search (text or /regex/)'}
+        value={search}
+        onChange={event => {
+          setSelectedKeys(new Set());
+          setSearch(event.target.value);
+        }}
+      />
 
       <ListBox
         aria-label={'Executor list'}
