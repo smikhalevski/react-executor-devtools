@@ -5,11 +5,13 @@
         "name": "typescript-plugin-css-modules"
       }
     ],
+    "noEmit": true,
     "moduleResolution": "Node",
     "esModuleInterop": true,
     "noUnusedLocals": true,
     "downlevelIteration": true,
     "preserveConstEnums": false,
+    "skipLibCheck": true,
     "strict": true,
     "target": "ES6",
     "module": "ES6",

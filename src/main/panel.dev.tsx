@@ -2,9 +2,6 @@ import './app/index.css';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { ExecutorManagerProvider } from 'react-executor';
-import { getValuePreview, inspect } from './inspect';
-import { INSPECTED_VALUE } from './types';
-import { getInspectionChild, nextUID } from './utils';
 import { App } from './app/App';
 import {
   executorManager,
@@ -14,6 +11,9 @@ import {
   listExecutor,
 } from './app/executors';
 import { type ContentClient, ContentClientProvider } from './app/useContentClient';
+import { getValuePreview, inspect, InspectOptions } from './inspect';
+import { INSPECTED_VALUE } from './types';
+import { getInspectionChild, nextUID } from './utils';
 
 const userMock = {
   login: 'octocat',
@@ -94,7 +94,9 @@ const executorMocks: { [executorId: string]: ExecutorMock } = {
 
 const DOCUMENT_ID = nextUID();
 
-for (const [executorId, executor] of Object.entries(executorMocks)) {
+for (let i = 0, entries = Object.entries(executorMocks); i < entries.length; ++i) {
+  const [executorId, executor] = entries[i];
+
   getDetailsExecutor(executorId).resolve({
     keyPreview: getValuePreview(executor.key),
     stats: {
@@ -103,23 +105,45 @@ for (const [executorId, executor] of Object.entries(executorMocks)) {
       isFulfilled: executor.isFulfilled || false,
       isPending: executor.isPending || false,
       isActive: executor.isActive || false,
-      hasTask: false,
+      hasTask: (i & 1) === 1,
     },
   });
 }
 
-listExecutor.resolve(Object.keys(executorMocks).map(executorId => ({ executorId, documentId: DOCUMENT_ID })));
+listExecutor.resolve(
+  Object.entries(executorMocks).map(([executorId, executor]) => ({
+    executorId,
+    documentId: DOCUMENT_ID,
+    searchableString: getValuePreview(executor.key, 4).toLowerCase(),
+  }))
+);
+
+const inspectOptions: InspectOptions = {
+  preprocessor: inspection => {
+    const value = inspection[INSPECTED_VALUE];
+
+    if (typeof value === 'function') {
+      inspection.location = { type: 'sourcesTab' };
+    }
+  },
+};
 
 const contentClient: ContentClient = {
   startInspection(executorId) {
-    inspectorExecutor.resolve({ executorId: executorId });
+    inspectorExecutor.resolve({ executorId });
 
-    getPartInspectionExecutor(executorId, 'key').resolve(inspect(executorMocks[executorId].key, 0));
-    getPartInspectionExecutor(executorId, 'value').resolve(inspect(executorMocks[executorId].value, 0));
-    getPartInspectionExecutor(executorId, 'reason').resolve(inspect(executorMocks[executorId].reason, 0));
-    getPartInspectionExecutor(executorId, 'task').resolve(inspect(undefined, 0));
-    getPartInspectionExecutor(executorId, 'plugins').resolve(inspect(executorMocks[executorId].plugins, 0));
-    getPartInspectionExecutor(executorId, 'annotations').resolve(inspect(executorMocks[executorId].annotations, 0));
+    getPartInspectionExecutor(executorId, 'key').resolve(inspect(executorMocks[executorId].key, 0, inspectOptions));
+    getPartInspectionExecutor(executorId, 'value').resolve(inspect(executorMocks[executorId].value, 0, inspectOptions));
+    getPartInspectionExecutor(executorId, 'reason').resolve(
+      inspect(executorMocks[executorId].reason, 0, inspectOptions)
+    );
+    getPartInspectionExecutor(executorId, 'task').resolve(inspect(() => 111, 0, inspectOptions));
+    getPartInspectionExecutor(executorId, 'plugins').resolve(
+      inspect(executorMocks[executorId].plugins, 0, inspectOptions)
+    );
+    getPartInspectionExecutor(executorId, 'annotations').resolve(
+      inspect(executorMocks[executorId].annotations, 0, inspectOptions)
+    );
   },
 
   goToDefinition(executorId, path, part) {},
@@ -132,16 +156,16 @@ const contentClient: ContentClient = {
 
   inspectChildren(executorId, part, path) {
     const inspectionExecutor = getPartInspectionExecutor(executorId, part);
-    const inspection = inspectionExecutor.get();
+    const inspection = inspectionExecutor.value;
 
-    if (inspection === null) {
+    if (inspection === undefined) {
       return;
     }
 
     const child = getInspectionChild(inspection, path);
 
     if (child !== undefined) {
-      child.children = inspect(child[INSPECTED_VALUE]).children;
+      child.children = inspect(child[INSPECTED_VALUE], 1, inspectOptions).children;
     }
     inspectionExecutor.resolve(inspection);
   },

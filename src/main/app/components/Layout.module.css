@@ -4,8 +4,8 @@
   height: 100%;
   display: flex;
   flex-direction: row;
-  --horizontal-resize-percentage: 40%;
-  --vertical-resize-percentage: 50%;
+  --horizontal-layout-ratio: 40%;
+  --vertical-layout-ratio: 50%;
   --resize-direction: horizontal;
 }
 
@@ -14,15 +14,17 @@
 }
 
 .LeftBlock {
-  flex: 0 0 var(--horizontal-resize-percentage);
-  overflow-x: hidden;
-  overflow-y: auto;
+  flex: 0 0 var(--horizontal-layout-ratio);
+  display: flex;
+  overflow: hidden;
+  flex-direction: column;
 }
 
 .RightBlock {
   flex: 1 1 auto;
-  overflow-x: hidden;
-  overflow-y: auto;
+  display: flex;
+  overflow: hidden;
+  flex-direction: column;
 }
 
 .ResizeBarWrapper {
@@ -46,7 +48,7 @@
   }
 
   .LeftBlock {
-    flex: 0 0 var(--vertical-resize-percentage);
+    flex: 0 0 var(--vertical-layout-ratio);
   }
 
   .RightBlock {

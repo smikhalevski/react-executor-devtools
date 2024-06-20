@@ -1,15 +1,16 @@
 import { clsx } from 'clsx';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { TooltipTrigger } from 'react-aria-components';
 import type { Inspection, Location } from '../../types';
 import { useInspector } from '../executors';
 import { ChevronIcon } from '../gen/icons/ChevronIcon';
 import { EyeIcon } from '../gen/icons/EyeIcon';
 import { IconButton } from './IconButton';
-import css from './InspectionView.module.css';
+import css from './InspectionTree.module.css';
 import { Loading } from './Loading';
 import { Tooltip } from './Tooltip';
 
-export interface InspectionViewProps {
+export interface InspectionTreeProps {
   inspection: Inspection;
   onExpanded: (path: number[]) => void;
   onGoToLocation: (location: Location, path: number[]) => void;
@@ -17,7 +18,7 @@ export interface InspectionViewProps {
   indent?: number;
 }
 
-export const InspectionView = (props: InspectionViewProps) => {
+export const InspectionTree = (props: InspectionTreeProps) => {
   const { inspection, onExpanded, onGoToLocation, path = [], indent = 0 } = props;
 
   const inspector = useInspector();
@@ -27,11 +28,13 @@ export const InspectionView = (props: InspectionViewProps) => {
 
   const handleExpandCollapseToggle = () => {
     setExpanded(isExpanded => !isExpanded);
+  };
 
-    if (inspection.children === undefined) {
+  useEffect(() => {
+    if (inspection.hasChildren && inspection.children === undefined && isExpanded) {
       onExpanded(path);
     }
-  };
+  }, [inspection.children, isExpanded]);
 
   return (
     <>
@@ -50,7 +53,8 @@ export const InspectionView = (props: InspectionViewProps) => {
 
         <span className={css.ValuePreview}>
           {location !== undefined && (
-            <Tooltip title={'Go to definition'}>
+            <TooltipTrigger>
+              <Tooltip>{'Go to definition'}</Tooltip>
               <IconButton
                 className={css.Spacer}
                 isDisabled={location.type === 'executor' && location.executorId === inspector?.executorId}
@@ -60,7 +64,7 @@ export const InspectionView = (props: InspectionViewProps) => {
               >
                 <EyeIcon />
               </IconButton>
-            </Tooltip>
+            </TooltipTrigger>
           )}
           {inspection.valuePreview}
         </span>
@@ -69,7 +73,7 @@ export const InspectionView = (props: InspectionViewProps) => {
       {inspection.hasChildren &&
         isExpanded &&
         (inspection.children?.map((child, index) => (
-          <InspectionView
+          <InspectionTree
             key={child.keyPreview}
             inspection={child}
             path={path.concat(index)}

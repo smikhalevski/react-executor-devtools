@@ -1,48 +1,83 @@
 import { clsx } from 'clsx';
-import React from 'react';
-import { useDetails, useInspector, useList } from '../executors';
+import React, { useState } from 'react';
+import { Input, ListBox, ListBoxItem, Selection } from 'react-aria-components';
+import { ListItem, useDetails, useList } from '../executors';
 import { useContentClient } from '../useContentClient';
 import css from './ListView.module.css';
 import { StatsIndicator } from './StatsIndicator';
 
 export const ListView = () => {
   const list = useList();
+  const contentClient = useContentClient();
+  const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set());
+  const [search, setSearch] = useState('');
 
-  return list.map(item => (
-    <ListItemView
-      id={item.executorId}
-      key={item.executorId}
-    />
-  ));
+  const handleSelectionChange = (keys: Selection) => {
+    setSelectedKeys(keys);
+
+    if (keys instanceof Set && keys.size === 1) {
+      contentClient.startInspection(keys.values().next().value);
+    }
+  };
+
+  return (
+    <>
+      <Input
+        className={css.SearchInput}
+        type={'search'}
+        placeholder={'Search (text or /regex/)'}
+        value={search}
+        onChange={event => {
+          setSelectedKeys(new Set());
+          setSearch(event.target.value);
+        }}
+      />
+
+      <ListBox
+        aria-label={'Executor list'}
+        className={css.ListBox}
+        items={list.filter(createListItemFilter(search))}
+        selectedKeys={selectedKeys}
+        selectionMode={'single'}
+        selectionBehavior={'replace'}
+        onSelectionChange={handleSelectionChange}
+      >
+        {item => <ListItemView id={item.executorId} />}
+      </ListBox>
+    </>
+  );
 };
 
-interface ListItemProps {
+interface ListItemViewProps {
   id: string;
 }
 
-const ListItemView = ({ id }: ListItemProps) => {
-  const inspector = useInspector();
+const ListItemView = ({ id }: ListItemViewProps) => {
   const details = useDetails(id);
-  const contentClient = useContentClient();
 
   return (
-    <div
-      className={clsx(
-        css.ListItem,
-        id === inspector?.executorId && css.SelectedListItem,
-        !details.stats.isActive && css.DeactivatedListItem
-      )}
-      onClick={() => {
-        contentClient.startInspection(id);
-      }}
+    <ListBoxItem
+      id={id}
+      className={clsx(css.ListBoxItem, !details.stats.isActive && css.Deactivated)}
+      aria-label={details.keyPreview}
     >
-      <div className={css.ListItemWrapper}>
-        <StatsIndicator
-          stats={details.stats}
-          className={css.StatsIndicator}
-        />
-        {details.keyPreview}
-      </div>
-    </div>
+      <StatsIndicator
+        stats={details.stats}
+        className={css.Spacer}
+      />
+      {details.keyPreview}
+    </ListBoxItem>
   );
 };
+
+function createListItemFilter(search: string): (item: ListItem) => boolean {
+  if (search.length > 1 && search[0] === '/' && search[search.length - 1] === '/') {
+    const regExp = new RegExp(search.slice(1, -1), 'i');
+
+    return item => regExp.test(item.searchableString);
+  }
+
+  search = search.toLowerCase();
+
+  return item => item.searchableString.includes(search);
+}
