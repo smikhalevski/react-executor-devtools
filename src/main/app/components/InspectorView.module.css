@@ -1,6 +1,28 @@
+.NoData {
+  color: var(--color-disabled);
+  white-space: nowrap;
+}
+
+.NoExecutor {
+  composes: NoData;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.Sections {
+  flex: 1 1 auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
 .Section {
   padding: 4px 8px;
-  border-top: solid 1px var(--color-border);
+
+  &:not(:first-child) {
+    border-top: solid 1px var(--color-border);
+  }
 }
 
 .SectionTitle {
@@ -8,31 +30,41 @@
   white-space: nowrap;
 }
 
-.NoData {
-  color: var(--color-no-data);
-}
-
-.Statuses {
-  margin-block-start: 4px;
-}
-
 .ButtonGroup {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
-
-  &:not(:empty) {
-    margin-block-start: 8px;
-  }
-}
-
-.DeactivatedIcon {
-  color: var(--color-warning);
-  width: 16px;
-  height: 16px;
-  margin: 1px;
-  vertical-align: top;
+  padding-block: 8px 4px;
 }
 
 .Spacer {
   margin-inline-end: 4px;
+}
+
+.DeactivatedIcon {
+  composes: Spacer;
+  color: var(--color-warning);
+  width: 18px;
+  height: 18px;
+  vertical-align: top;
+}
+
+.StatusesBlock {
+  display: flex;
+  margin-block-start: 4px;
+}
+
+.Statuses {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0 8px;
+}
+
+.Status {
+  white-space: nowrap;
+}
+
+.StatusTimestamp {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-disabled);
 }

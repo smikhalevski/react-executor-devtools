@@ -9,6 +9,11 @@ interface Inspector {
 interface ListItem {
   executorId: string;
   documentId: string;
+
+  /**
+   * String that is used for list filtering.
+   */
+  term: string;
 }
 
 export const executorManager = new ExecutorManager();
@@ -17,14 +22,14 @@ export const listExecutor = executorManager.getOrCreate<ListItem[]>('list', []);
 
 export const inspectorExecutor = executorManager.getOrCreate<Inspector | null>('inspector', null);
 
-const plugins = [detachDeactivated(0)];
-
 export function getDetailsExecutor(executorId: string): Executor<ExecutorDetails> {
-  return executorManager.getOrCreate(`details_${executorId}`, undefined, plugins);
+  return executorManager.getOrCreate(`details_${executorId}`, undefined, [detachDeactivated(0)]);
 }
 
 export function getPartInspectionExecutor(executorId: string, part: ExecutorPart): Executor<Inspection | null> {
-  return executorManager.getOrCreate<Inspection | null>(`inspection_${executorId}_${part}`, null, plugins);
+  return executorManager.getOrCreate<Inspection | null>(`inspection_${executorId}_${part}`, null, [
+    detachDeactivated(0),
+  ]);
 }
 
 export function useInspector(): Inspector | null {
@@ -37,7 +42,7 @@ export function useList(): ListItem[] {
   return listExecutor.get();
 }
 
-export function useDetails(executorId: string): ExecutorDetails {
+export function useExecutorDetails(executorId: string): ExecutorDetails {
   const executor = getDetailsExecutor(executorId);
   useExecutorSubscription(executor);
   return executor.get();

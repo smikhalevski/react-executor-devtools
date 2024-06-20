@@ -6,6 +6,7 @@
     Segoe UI Emoji, Segoe UI Symbol;
   --font-size-monospace-normal: 11px;
   --font-size-sans-normal: 12px;
+  --font-size-sans-large: 14px;
   --line-height-data: 18px;
 
   --color-background: #fff;
@@ -24,24 +25,23 @@
   --color-icon-button-disabled: #cfd1d5;
   --color-icon-button-pressed: #23272f;
   --color-icon-button-hovered: #23272f;
-  --color-executor-unsettled: #cbcbcb;
+  --color-executor-unsettled: #bfbfbf;
   --color-executor-fulfilled: green;
   --color-executor-rejected: red;
   --color-warning: #f57900;
-  --color-no-data: #a6a6a6;
+  --color-disabled: #8f8f8f;
   --color-tooltip-background: rgba(0, 0, 0, 0.9);
   --color-tooltip-text: #ffffff;
   --color-expand-collapse-toggle: #777d88;
   --color-key-preview: #23272f;
   --color-value-preview: #1a1aa6;
+  --color-value-preview-deactivated: #8383d1;
   --color-text: #000000;
-  --color-resize-bar: #eeeeee;
+  --color-resize-bar: #dfdfdf;
   --color-border: #eeeeee;
-  --color-list-key: #6a51b2;
   --color-background-inactive: #e5e5e5;
   --color-background-selected: #0088fa;
   --color-text-selected: #ffffff;
-  --color-list-key-inverted: #ffffff;
   --color-search-match: #f7923b;
 }
 
@@ -61,6 +61,11 @@ body {
   font-family: var(--font-family-sans);
   font-size: var(--font-size-sans-normal);
   line-height: var(--line-height-data);
+}
+
+svg {
+  flex: 0 0 auto;
+  vertical-align: top;
 }
 
 #container {

@@ -54,7 +54,7 @@ const contentState: ContentState = {
 };
 
 const inspectOptions: InspectOptions = {
-  preprocessor(inspection) {
+  preprocessor: inspection => {
     const value = inspection[INSPECTED_VALUE];
 
     if (typeof value === 'function') {

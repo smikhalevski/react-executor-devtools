@@ -56,7 +56,7 @@ function receiveContentMessage(message: ContentMessage, documentId: string): voi
         break;
       }
 
-      list.push({ executorId: message.executorId, documentId });
+      list.push({ executorId: message.executorId, documentId, term: message.details.keyPreview.toLowerCase() });
       listExecutor.resolve(list);
 
       getDetailsExecutor(message.executorId).resolve(message.details);

@@ -15,14 +15,16 @@
 
 .LeftBlock {
   flex: 0 0 var(--horizontal-resize-percentage);
-  overflow-x: hidden;
-  overflow-y: auto;
+  display: flex;
+  overflow: hidden;
+  flex-direction: column;
 }
 
 .RightBlock {
   flex: 1 1 auto;
-  overflow-x: hidden;
-  overflow-y: auto;
+  display: flex;
+  overflow: hidden;
+  flex-direction: column;
 }
 
 .ResizeBarWrapper {

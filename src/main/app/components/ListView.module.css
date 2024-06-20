@@ -1,45 +1,73 @@
-.ListItem,
-.SelectedListItem,
-.DeactivatedListItem {
-  color: var(--color-list-key);
-  font-family: var(--font-family-monospace);
-  font-size: var(--font-size-monospace-normal);
-  line-height: var(--line-height-data);
+.SearchBlock {
+  flex: 0 0 auto;
+  display: flex;
+  border-bottom: solid 1px var(--color-border);
 }
 
-.DeactivatedListItem {
-  background-color: var(--color-background-inactive);
+.SearchInput {
+  flex: 1 1 auto;
+  padding: 14px;
+  margin: 0;
+  font-size: var(--font-size-sans-large);
+  border: 0 none;
+  background: transparent;
+  border-radius: 0;
+  outline: 0 transparent;
+
+  &::-webkit-search-decoration,
+  &::-webkit-search-cancel-button,
+  &::-webkit-search-results-button,
+  &::-webkit-search-results-decoration {
+    -webkit-appearance: none;
+  }
+
+  &::placeholder {
+    color: var(--color-disabled);
+  }
 }
 
-.ListItemWrapper {
+.List {
+  flex: 1 1 auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.ListItem {
+  display: flex;
   padding: 0 4px;
   white-space: pre;
-  display: inline-flex;
   align-items: center;
   cursor: default;
   user-select: none;
   vertical-align: top;
+  color: var(--color-value-preview);
+  font-family: var(--font-family-monospace);
+  font-size: var(--font-size-monospace-normal);
+  line-height: var(--line-height-data);
+
+  &[data-selected] {
+    background-color: var(--color-background-inactive);
+  }
+
+  &[data-focused],
+  &[data-focus-visible] {
+    outline: 0;
+    background-color: var(--color-background-selected);
+    color: var(--color-text-selected);
+    --color-executor-fulfilled: var(--color-text-selected);
+    --color-executor-rejected: var(--color-text-selected);
+    --color-executor-unsettled: var(--color-text-selected);
+  }
 }
 
-.SelectedListItem {
-  background-color: var(--color-background-selected);
-  color: var(--color-text-selected);
-
-  /* Invert colors */
-  --color-list-key: var(--color-list-key-inverted);
-  --color-text: var(--color-text-selected);
-  --color-expand-collapse-toggle: var(--color-list-key-inverted);
-
-  --color-executor-fulfilled: var(--color-text-selected);
-  --color-executor-rejected: var(--color-text-selected);
-  --color-warning: var(--color-text-selected);
-  --color-executor-unsettled: rgba(255, 255, 255, 0.6);
+.Deactivated {
+  color: var(--color-value-preview-deactivated);
 }
 
-.Highlight {
-  background-color: var(--color-search-match);
+.Hidden {
+  display: none;
 }
 
-.StatsIndicator {
+.Spacer {
   margin-inline-end: 4px;
 }

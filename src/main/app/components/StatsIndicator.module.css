@@ -1,5 +1,6 @@
 .StatsIndicator {
   display: inline-flex;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: center;
   width: var(--line-height-data);

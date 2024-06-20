@@ -1,10 +1,11 @@
-import React, { Fragment, type ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 import type { ExecutorPart, Location } from '../../types';
-import { useDetails, useInspector, usePartInspection } from '../executors';
+import { useExecutorDetails, useInspector, usePartInspection } from '../executors';
 import { WarningIcon } from '../gen/icons/WarningIcon';
 import { useContentClient } from '../useContentClient';
 import { Button } from './Button';
-import { InspectionView } from './InspectionView';
+import { FormattedRelativeDateTime } from './FormattedRelativeDateTime';
+import { InspectionTree } from './InspectionTree';
 import css from './InspectorView.module.css';
 import { Loading } from './Loading';
 import { StatsIndicator } from './StatsIndicator';
@@ -13,61 +14,62 @@ export const InspectorView = () => {
   const inspector = useInspector();
 
   if (inspector === null) {
-    return null;
+    return <div className={css.NoExecutor}>{'No executor'}</div>;
   }
 
   return (
-    <Fragment key={inspector.executorId}>
+    <div
+      key={inspector.executorId}
+      className={css.Sections}
+    >
       <Section title={'Key'}>
-        <PartInspectionView
+        <PartInspection
           id={inspector.executorId}
           part={'key'}
         />
       </Section>
 
-      <Section title={'Status'}>
-        <DetailsView id={inspector.executorId} />
-      </Section>
+      <StatsSection id={inspector.executorId} />
 
       <Section title={'Value'}>
-        <PartInspectionView
+        <PartInspection
           id={inspector.executorId}
           part={'value'}
         />
       </Section>
 
       <Section title={'Reason'}>
-        <PartInspectionView
+        <PartInspection
           id={inspector.executorId}
           part={'reason'}
         />
       </Section>
 
       <Section title={'Task'}>
-        <TaskInspectionView
+        <TaskInspection
           id={inspector.executorId}
           noDataLabel={'No task'}
         />
       </Section>
 
       <Section title={'Plugins'}>
-        <PartInspectionView
+        <PartInspection
           id={inspector.executorId}
           part={'plugins'}
-          isExploded={true}
+          isRootHidden={true}
           noDataLabel={'No plugins'}
         />
       </Section>
 
       <Section title={'Annotations'}>
-        <PartInspectionView
+        <PartInspection
           id={inspector.executorId}
           part={'annotations'}
-          isExploded={true}
+          isRootHidden={true}
           noDataLabel={'No annotations'}
         />
       </Section>
-    </Fragment>
+    </div>
   );
 };
 
@@ -83,79 +85,92 @@ const Section = ({ title, children }: SectionProps) => (
   </div>
 );
 
-interface DetailsViewProps {
+interface StatsSectionProps {
   id: string;
 }
 
-const DetailsView = ({ id }: DetailsViewProps) => {
+const StatsSection = ({ id }: StatsSectionProps) => {
   const contentClient = useContentClient();
-  const details = useDetails(id);
-
-  const statuses = [];
-
-  statuses.push(details.stats.settledAt === 0 ? 'Unsettled' : details.stats.isFulfilled ? 'Fulfilled' : 'Rejected');
-  if (details.stats.invalidatedAt !== 0) {
-    statuses.push('Invalidated');
-  }
-  if (details.stats.isPending) {
-    statuses.push('Pending');
-  }
+  const { stats } = useExecutorDetails(id);
 
   return (
-    <>
-      <div className={css.Statuses}>
+    <Section title={'Status'}>
+      <div className={css.StatusesBlock}>
         <StatsIndicator
-          stats={details.stats}
+          stats={stats}
           className={css.Spacer}
         />
 
-        {statuses.join(', ')}
-
-        {!details.stats.isActive && (
-          <>
-            <br />
-            <span className={css.Spacer}>
-              <WarningIcon className={css.DeactivatedIcon} />
+        <div className={css.Statuses}>
+          {stats.settledAt !== 0 ? (
+            <span className={css.Status}>
+              {stats.isFulfilled ? 'Fulfilled ' : 'Rejected '}
+              <span className={css.StatusTimestamp}>
+                {'('}
+                <FormattedRelativeDateTime timestamp={stats.settledAt} />
+                {')'}
+              </span>
             </span>
-            {'Deactivated'}
-          </>
-        )}
+          ) : (
+            <span className={css.Status}>{'Unsettled'}</span>
+          )}
+
+          {stats.invalidatedAt !== 0 && (
+            <span className={css.Status}>
+              {'Invalidated '}
+              <span className={css.StatusTimestamp}>
+                {'('}
+                <FormattedRelativeDateTime timestamp={stats.invalidatedAt} />
+                {')'}
+              </span>
+            </span>
+          )}
+
+          {stats.isPending && <span className={css.Status}>{'Pending'}</span>}
+        </div>
       </div>
+
+      {!stats.isActive && (
+        <div className={css.Status}>
+          <WarningIcon className={css.DeactivatedIcon} />
+          {'Deactivated'}
+        </div>
+      )}
 
       <div className={css.ButtonGroup}>
         <Button
-          isDisabled={!details.stats.hasTask || details.stats.isPending}
+          isDisabled={!stats.hasTask || stats.isPending}
           onPress={() => contentClient.retryExecutor(id)}
         >
           {'Retry'}
         </Button>
 
         <Button
-          isDisabled={details.stats.settledAt === 0 || details.stats.invalidatedAt !== 0}
+          isDisabled={stats.settledAt === 0 || stats.invalidatedAt !== 0}
           onPress={() => contentClient.invalidateExecutor(id)}
         >
           {'Invalidate'}
         </Button>
 
         <Button
-          isDisabled={!details.stats.isPending}
+          isDisabled={!stats.isPending}
           onPress={() => contentClient.abortExecutor(id)}
         >
           {'Abort'}
         </Button>
       </div>
-    </>
+    </Section>
   );
 };
 
-interface PartInspectionViewProps {
+interface PartInspectionProps {
   id: string;
   part: ExecutorPart;
   noDataLabel?: ReactNode;
-  isExploded?: boolean;
+  isRootHidden?: boolean;
 }
 
-const PartInspectionView = ({ id, part, noDataLabel, isExploded }: PartInspectionViewProps) => {
+const PartInspection = ({ id, part, noDataLabel, isRootHidden }: PartInspectionProps) => {
   const contentClient = useContentClient();
   const inspection = usePartInspection(id, part);
 
@@ -175,9 +190,9 @@ const PartInspectionView = ({ id, part, noDataLabel, isExploded }: PartInspectio
     }
   };
 
-  if (!isExploded) {
+  if (!isRootHidden) {
     return (
-      <InspectionView
+      <InspectionTree
         inspection={inspection}
         onExpanded={handleExpanded}
         onGoToLocation={handleGoToLocation}
@@ -190,7 +205,7 @@ const PartInspectionView = ({ id, part, noDataLabel, isExploded }: PartInspectio
   }
 
   return inspection.children.map((inspection, index) => (
-    <InspectionView
+    <InspectionTree
       key={inspection.keyPreview}
       inspection={inspection}
       path={[index]}
@@ -200,13 +215,13 @@ const PartInspectionView = ({ id, part, noDataLabel, isExploded }: PartInspectio
   ));
 };
 
-interface TaskInspectionViewProps {
+interface TaskInspectionProps {
   id: string;
   noDataLabel: ReactNode;
 }
 
-const TaskInspectionView = ({ id, noDataLabel }: TaskInspectionViewProps) => {
-  const details = useDetails(id);
+const TaskInspection = ({ id, noDataLabel }: TaskInspectionProps) => {
+  const details = useExecutorDetails(id);
 
   usePartInspection(id, 'task');
 
@@ -215,7 +230,7 @@ const TaskInspectionView = ({ id, noDataLabel }: TaskInspectionViewProps) => {
   }
 
   return (
-    <PartInspectionView
+    <PartInspection
       id={id}
       part={'task'}
     />

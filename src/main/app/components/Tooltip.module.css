@@ -54,9 +54,6 @@
   }
 }
 
-.OverlayArrow {
-}
-
 @keyframes Slide {
   from {
     transform: var(--origin);

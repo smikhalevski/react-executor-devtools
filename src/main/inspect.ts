@@ -19,6 +19,7 @@ export interface InspectOptions {
    */
   preprocessor?: (inspection: Inspection) => boolean | void;
 }
+
 /**
  * Inspects the given value and values in its properties.
  *
