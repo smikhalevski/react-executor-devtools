@@ -9,16 +9,15 @@ import { StatsIndicator } from './StatsIndicator';
 export const ListView = () => {
   const list = useList();
   const contentClient = useContentClient();
-  const [selectedId, setSelectedId] = useState<string>();
+  const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set());
   const [search, setSearch] = useState('');
   const pattern = parseSearch(search);
 
   const handleSelectionChange = (keys: Selection) => {
-    if (keys instanceof Set && keys.size === 1) {
-      const selectedId = keys.values().next().value;
+    setSelectedKeys(keys);
 
-      setSelectedId(selectedId);
-      contentClient.startInspection(selectedId);
+    if (keys instanceof Set && keys.size === 1) {
+      contentClient.startInspection(keys.values().next().value);
     }
   };
 
@@ -31,26 +30,24 @@ export const ListView = () => {
           placeholder={'Search (text or /regex/)'}
           value={search}
           onChange={event => {
+            setSelectedKeys(new Set());
             setSearch(event.target.value);
           }}
         />
       </div>
 
       <ListBox
-        className={css.List}
+        aria-label={'Executor list'}
+        className={css.ListBox}
+        items={list.filter(item =>
+          typeof pattern === 'string' ? item.term.includes(pattern) : pattern.test(item.term)
+        )}
+        selectedKeys={selectedKeys}
         selectionMode={'single'}
         selectionBehavior={'replace'}
-        selectedKeys={selectedId !== undefined ? [selectedId] : []}
         onSelectionChange={handleSelectionChange}
-        aria-label={'Executor list'}
       >
-        {list.map(item => (
-          <ListItemView
-            key={item.executorId}
-            id={item.executorId}
-            isHidden={typeof pattern === 'string' ? !item.term.includes(pattern) : !pattern.test(item.term)}
-          />
-        ))}
+        {item => <ListItemView id={item.executorId} />}
       </ListBox>
     </>
   );
@@ -58,17 +55,15 @@ export const ListView = () => {
 
 interface ListItemViewProps {
   id: string;
-  isHidden: boolean;
 }
 
-const ListItemView = ({ id, isHidden }: ListItemViewProps) => {
+const ListItemView = ({ id }: ListItemViewProps) => {
   const details = useExecutorDetails(id);
 
   return (
     <ListBoxItem
       id={id}
-      className={clsx(css.ListItem, !details.stats.isActive && css.Deactivated, isHidden && css.Hidden)}
-      isDisabled={isHidden}
+      className={clsx(css.ListBoxItem, !details.stats.isActive && css.Deactivated)}
       aria-label={details.keyPreview}
     >
       <StatsIndicator
@@ -81,7 +76,8 @@ const ListItemView = ({ id, isHidden }: ListItemViewProps) => {
 };
 
 function parseSearch(search: string): string | RegExp {
-  return search.length > 1 && search.startsWith('/') && search.endsWith('/')
-    ? new RegExp(search.slice(1, -1), 'i')
-    : search.toLowerCase();
+  if (search.length > 1 && search.startsWith('/') && search.endsWith('/')) {
+    return new RegExp(search.slice(1, -1), 'i');
+  }
+  return search.toLowerCase();
 }

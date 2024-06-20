@@ -24,37 +24,37 @@ export const InspectorView = () => {
     >
       <Section title={'Key'}>
         <PartInspection
-          id={inspector.executorId}
+          executorId={inspector.executorId}
           part={'key'}
         />
       </Section>
 
-      <StatsSection id={inspector.executorId} />
+      <StatsSection executorId={inspector.executorId} />
 
       <Section title={'Value'}>
         <PartInspection
-          id={inspector.executorId}
+          executorId={inspector.executorId}
           part={'value'}
         />
       </Section>
 
       <Section title={'Reason'}>
         <PartInspection
-          id={inspector.executorId}
+          executorId={inspector.executorId}
           part={'reason'}
         />
       </Section>
 
       <Section title={'Task'}>
         <TaskInspection
-          id={inspector.executorId}
+          executorId={inspector.executorId}
           noDataLabel={'No task'}
         />
       </Section>
 
       <Section title={'Plugins'}>
         <PartInspection
-          id={inspector.executorId}
+          executorId={inspector.executorId}
           part={'plugins'}
           isRootHidden={true}
           noDataLabel={'No plugins'}
@@ -63,7 +63,7 @@ export const InspectorView = () => {
 
       <Section title={'Annotations'}>
         <PartInspection
-          id={inspector.executorId}
+          executorId={inspector.executorId}
           part={'annotations'}
           isRootHidden={true}
           noDataLabel={'No annotations'}
@@ -86,12 +86,12 @@ const Section = ({ title, children }: SectionProps) => (
 );
 
 interface StatsSectionProps {
-  id: string;
+  executorId: string;
 }
 
-const StatsSection = ({ id }: StatsSectionProps) => {
+const StatsSection = ({ executorId }: StatsSectionProps) => {
   const contentClient = useContentClient();
-  const { stats } = useExecutorDetails(id);
+  const { stats } = useExecutorDetails(executorId);
 
   return (
     <Section title={'Status'}>
@@ -140,21 +140,21 @@ const StatsSection = ({ id }: StatsSectionProps) => {
       <div className={css.ButtonGroup}>
         <Button
           isDisabled={!stats.hasTask || stats.isPending}
-          onPress={() => contentClient.retryExecutor(id)}
+          onPress={() => contentClient.retryExecutor(executorId)}
         >
           {'Retry'}
         </Button>
 
         <Button
           isDisabled={stats.settledAt === 0 || stats.invalidatedAt !== 0}
-          onPress={() => contentClient.invalidateExecutor(id)}
+          onPress={() => contentClient.invalidateExecutor(executorId)}
         >
           {'Invalidate'}
         </Button>
 
         <Button
           isDisabled={!stats.isPending}
-          onPress={() => contentClient.abortExecutor(id)}
+          onPress={() => contentClient.abortExecutor(executorId)}
         >
           {'Abort'}
         </Button>
@@ -164,29 +164,29 @@ const StatsSection = ({ id }: StatsSectionProps) => {
 };
 
 interface PartInspectionProps {
-  id: string;
+  executorId: string;
   part: ExecutorPart;
   noDataLabel?: ReactNode;
   isRootHidden?: boolean;
 }
 
-const PartInspection = ({ id, part, noDataLabel, isRootHidden }: PartInspectionProps) => {
+const PartInspection = ({ executorId, part, noDataLabel, isRootHidden }: PartInspectionProps) => {
   const contentClient = useContentClient();
-  const inspection = usePartInspection(id, part);
+  const inspection = usePartInspection(executorId, part);
 
   if (inspection === null) {
     return <Loading />;
   }
 
   const handleExpanded = (path: number[]) => {
-    contentClient.inspectChildren(id, part, path);
+    contentClient.inspectChildren(executorId, part, path);
   };
 
   const handleGoToLocation = (location: Location, path: number[]) => {
     if (location.type === 'executor') {
       contentClient.startInspection(location.executorId);
     } else {
-      contentClient.goToDefinition(id, part, path);
+      contentClient.goToDefinition(executorId, part, path);
     }
   };
 
@@ -216,14 +216,14 @@ const PartInspection = ({ id, part, noDataLabel, isRootHidden }: PartInspectionP
 };
 
 interface TaskInspectionProps {
-  id: string;
+  executorId: string;
   noDataLabel: ReactNode;
 }
 
-const TaskInspection = ({ id, noDataLabel }: TaskInspectionProps) => {
-  const details = useExecutorDetails(id);
+const TaskInspection = ({ executorId, noDataLabel }: TaskInspectionProps) => {
+  const details = useExecutorDetails(executorId);
 
-  usePartInspection(id, 'task');
+  usePartInspection(executorId, 'task');
 
   if (!details.stats.hasTask) {
     return <div className={css.NoData}>{noDataLabel}</div>;
@@ -231,7 +231,7 @@ const TaskInspection = ({ id, noDataLabel }: TaskInspectionProps) => {
 
   return (
     <PartInspection
-      id={id}
+      executorId={executorId}
       part={'task'}
     />
   );

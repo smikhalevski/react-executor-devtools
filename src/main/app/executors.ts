@@ -23,7 +23,7 @@ export const listExecutor = executorManager.getOrCreate<ListItem[]>('list', []);
 export const inspectorExecutor = executorManager.getOrCreate<Inspector | null>('inspector', null);
 
 export function getDetailsExecutor(executorId: string): Executor<ExecutorDetails> {
-  return executorManager.getOrCreate(`details_${executorId}`, undefined, [detachDeactivated(0)]);
+  return executorManager.getOrCreate(`details_${executorId}`);
 }
 
 export function getPartInspectionExecutor(executorId: string, part: ExecutorPart): Executor<Inspection | null> {

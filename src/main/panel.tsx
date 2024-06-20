@@ -37,7 +37,15 @@ function receiveContentMessage(message: ContentMessage, documentId: string): voi
 
     case 'content_closed': {
       const inspector = inspectorExecutor.get();
-      const list = listExecutor.get().filter(item => item.documentId !== documentId);
+      const list = [];
+
+      for (const item of listExecutor.get()) {
+        if (item.documentId !== documentId) {
+          list.push(item);
+        } else {
+          executorManager.detach(getDetailsExecutor(item.executorId).key);
+        }
+      }
 
       if (inspector !== null && list.every(item => item.executorId !== inspector.executorId)) {
         // Inspected executor was detached
@@ -73,6 +81,7 @@ function receiveContentMessage(message: ContentMessage, documentId: string): voi
       if (index !== -1) {
         list.splice(index, 1);
         listExecutor.resolve(list);
+        executorManager.detach(getDetailsExecutor(message.executorId).key);
       }
       break;
     }
