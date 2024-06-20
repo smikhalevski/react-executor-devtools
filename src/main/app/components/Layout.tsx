@@ -1,10 +1,10 @@
 import React, { type ReactNode, useRef } from 'react';
-import { resizePercentageExecutor } from '../executors';
+import { layoutRatioExecutor } from '../executors';
 import css from './Layout.module.css';
 
 const SAFE_ZONE_PERCENTAGE = 0.1;
 
-const resizePercentage = resizePercentageExecutor.get();
+const layoutRatio = layoutRatioExecutor.get();
 
 interface LayoutProps {
   leftBlock?: ReactNode;
@@ -27,10 +27,10 @@ export const Layout = (props: LayoutProps) => {
       const safeZone = width * SAFE_ZONE_PERCENTAGE;
 
       moveListener = event => {
-        resizePercentage.horizontal =
+        layoutRatio.horizontal =
           (((Math.min(Math.max(event.clientX - offset, safeZone), width - safeZone) / width) * 10000) | 0) / 100 + '%';
 
-        layoutElement.style.setProperty('--horizontal-resize-percentage', resizePercentage.horizontal);
+        layoutElement.style.setProperty('--horizontal-layout-ratio', layoutRatio.horizontal);
       };
     } else {
       const offset = event.clientY - rect.top - rect.height / 2;
@@ -38,11 +38,11 @@ export const Layout = (props: LayoutProps) => {
       const safeZone = height * SAFE_ZONE_PERCENTAGE;
 
       moveListener = event => {
-        resizePercentage.vertical =
+        layoutRatio.vertical =
           (((Math.min(Math.max(event.clientY - offset, safeZone), height - safeZone) / height) * 10000) | 0) / 100 +
           '%';
 
-        layoutElement.style.setProperty('--vertical-resize-percentage', resizePercentage.vertical);
+        layoutElement.style.setProperty('--vertical-layout-ratio', layoutRatio.vertical);
       };
     }
 
@@ -54,7 +54,7 @@ export const Layout = (props: LayoutProps) => {
       window.removeEventListener('blur', unsubscribe);
 
       layoutElement.classList.remove(css.Resizing);
-      resizePercentageExecutor.resolve(resizePercentage);
+      layoutRatioExecutor.resolve(layoutRatio);
     };
 
     window.addEventListener('mousedown', moveListener);
@@ -71,8 +71,8 @@ export const Layout = (props: LayoutProps) => {
       ref={layoutRef}
       className={css.Layout}
       style={{
-        '--horizontal-resize-percentage': resizePercentage.horizontal,
-        '--vertical-resize-percentage': resizePercentage.vertical,
+        '--horizontal-layout-ratio': layoutRatio.horizontal,
+        '--vertical-layout-ratio': layoutRatio.vertical,
       }}
     >
       <div className={css.LeftBlock}>{props.leftBlock}</div>

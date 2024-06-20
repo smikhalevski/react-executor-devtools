@@ -26,11 +26,9 @@ interface ListItem {
 
 export const executorManager = new ExecutorManager();
 
-export const resizePercentageExecutor = executorManager.getOrCreate(
-  'resize_percentage',
-  { horizontal: '40%', vertical: '50%' },
-  [synchronizeStorage(localStorage, { storageKey: 'resize_percentage' })]
-);
+export const layoutRatioExecutor = executorManager.getOrCreate('layout_ratio', { horizontal: '40%', vertical: '50%' }, [
+  synchronizeStorage(localStorage, { storageKey: 'layout_ratio' }),
+]);
 
 export const listExecutor = executorManager.getOrCreate<ListItem[]>('list', []);
 
