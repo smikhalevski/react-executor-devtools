@@ -36,7 +36,7 @@ function receiveContentMessage(message: ContentMessage, documentId: string): voi
       break;
 
     case 'content_closed': {
-      const inspector = inspectorExecutor.get();
+      const inspector = inspectorExecutor.value;
       const list = [];
 
       for (const item of listExecutor.get()) {
@@ -47,9 +47,9 @@ function receiveContentMessage(message: ContentMessage, documentId: string): voi
         }
       }
 
-      if (inspector !== null && list.every(item => item.executorId !== inspector.executorId)) {
+      if (inspector !== undefined && list.every(item => item.executorId !== inspector.executorId)) {
         // Inspected executor was detached
-        inspectorExecutor.resolve(null);
+        inspectorExecutor.clear();
       }
 
       listExecutor.resolve(list);
@@ -64,7 +64,12 @@ function receiveContentMessage(message: ContentMessage, documentId: string): voi
         break;
       }
 
-      list.push({ executorId: message.executorId, documentId, term: message.details.keyPreview.toLowerCase() });
+      list.push({
+        executorId: message.executorId,
+        documentId,
+        searchableString: message.details.keyPreview.toLowerCase(),
+      });
+
       listExecutor.resolve(list);
 
       getDetailsExecutor(message.executorId).resolve(message.details);
@@ -76,7 +81,7 @@ function receiveContentMessage(message: ContentMessage, documentId: string): voi
       const index = list.findIndex(item => item.executorId === message.executorId);
 
       if (inspectorExecutor.value?.executorId === message.executorId) {
-        inspectorExecutor.resolve(null);
+        inspectorExecutor.clear();
       }
       if (index !== -1) {
         list.splice(index, 1);

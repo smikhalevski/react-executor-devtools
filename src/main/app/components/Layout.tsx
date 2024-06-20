@@ -1,13 +1,10 @@
 import React, { type ReactNode, useRef } from 'react';
+import { resizePercentageExecutor } from '../executors';
 import css from './Layout.module.css';
 
 const SAFE_ZONE_PERCENTAGE = 0.1;
-const RESIZE_PERCENTAGE_KEY = 'resize-percentage';
 
-const resizePercentageJson = localStorage.getItem(RESIZE_PERCENTAGE_KEY);
-
-const resizePercentage: { horizontal: string; vertical: string } =
-  resizePercentageJson !== null ? JSON.parse(resizePercentageJson) : { horizontal: '40%', vertical: '50%' };
+const resizePercentage = resizePercentageExecutor.get();
 
 interface LayoutProps {
   leftBlock?: ReactNode;
@@ -31,7 +28,7 @@ export const Layout = (props: LayoutProps) => {
 
       moveListener = event => {
         resizePercentage.horizontal =
-          (Math.min(Math.max(event.clientX - offset, safeZone), width - safeZone) / width) * 100 + '%';
+          (((Math.min(Math.max(event.clientX - offset, safeZone), width - safeZone) / width) * 10000) | 0) / 100 + '%';
 
         layoutElement.style.setProperty('--horizontal-resize-percentage', resizePercentage.horizontal);
       };
@@ -42,7 +39,8 @@ export const Layout = (props: LayoutProps) => {
 
       moveListener = event => {
         resizePercentage.vertical =
-          (Math.min(Math.max(event.clientY - offset, safeZone), height - safeZone) / height) * 100 + '%';
+          (((Math.min(Math.max(event.clientY - offset, safeZone), height - safeZone) / height) * 10000) | 0) / 100 +
+          '%';
 
         layoutElement.style.setProperty('--vertical-resize-percentage', resizePercentage.vertical);
       };
@@ -56,7 +54,7 @@ export const Layout = (props: LayoutProps) => {
       window.removeEventListener('blur', unsubscribe);
 
       layoutElement.classList.remove(css.Resizing);
-      localStorage.setItem(RESIZE_PERCENTAGE_KEY, JSON.stringify(resizePercentage));
+      resizePercentageExecutor.resolve(resizePercentage);
     };
 
     window.addEventListener('mousedown', moveListener);

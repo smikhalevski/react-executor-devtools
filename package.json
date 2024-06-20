@@ -11,10 +11,11 @@
     "manifest": "./src/main/static/manifest.json"
   },
   "scripts": {
-    "build": "npm run build:icons && npm run build:panel && npm run build:devtools",
+    "build": "npm run build:icons && npm run typecheck && npm run build:panel && npm run build:devtools",
     "build:icons": "svgr src/main/app/icons",
     "build:panel": "vite build",
     "build:devtools": "cp -R src/main/static/ build/ && cp LICENSE.txt build/ && rollup --config",
+    "typecheck": "tsc",
     "start": "npm run build:icons && vite",
     "clean": "rimraf src/main/app/gen build coverage",
     "test": "jest",

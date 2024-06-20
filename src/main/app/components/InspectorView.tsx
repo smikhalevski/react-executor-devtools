@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
 import type { ExecutorPart, Location } from '../../types';
-import { useExecutorDetails, useInspector, usePartInspection } from '../executors';
+import { useDetails, useInspector, usePartInspection } from '../executors';
 import { WarningIcon } from '../gen/icons/WarningIcon';
 import { useContentClient } from '../useContentClient';
 import { Button } from './Button';
@@ -13,7 +13,7 @@ import { StatsIndicator } from './StatsIndicator';
 export const InspectorView = () => {
   const inspector = useInspector();
 
-  if (inspector === null) {
+  if (inspector === undefined) {
     return <div className={css.NoExecutor}>{'No executor'}</div>;
   }
 
@@ -56,7 +56,7 @@ export const InspectorView = () => {
         <PartInspection
           executorId={inspector.executorId}
           part={'plugins'}
-          isRootHidden={true}
+          isHeadless={true}
           noDataLabel={'No plugins'}
         />
       </Section>
@@ -65,7 +65,7 @@ export const InspectorView = () => {
         <PartInspection
           executorId={inspector.executorId}
           part={'annotations'}
-          isRootHidden={true}
+          isHeadless={true}
           noDataLabel={'No annotations'}
         />
       </Section>
@@ -91,7 +91,7 @@ interface StatsSectionProps {
 
 const StatsSection = ({ executorId }: StatsSectionProps) => {
   const contentClient = useContentClient();
-  const { stats } = useExecutorDetails(executorId);
+  const { stats } = useDetails(executorId);
 
   return (
     <Section title={'Status'}>
@@ -167,14 +167,14 @@ interface PartInspectionProps {
   executorId: string;
   part: ExecutorPart;
   noDataLabel?: ReactNode;
-  isRootHidden?: boolean;
+  isHeadless?: boolean;
 }
 
-const PartInspection = ({ executorId, part, noDataLabel, isRootHidden }: PartInspectionProps) => {
+const PartInspection = ({ executorId, part, noDataLabel, isHeadless }: PartInspectionProps) => {
   const contentClient = useContentClient();
   const inspection = usePartInspection(executorId, part);
 
-  if (inspection === null) {
+  if (inspection === undefined) {
     return <Loading />;
   }
 
@@ -190,7 +190,7 @@ const PartInspection = ({ executorId, part, noDataLabel, isRootHidden }: PartIns
     }
   };
 
-  if (!isRootHidden) {
+  if (!isHeadless) {
     return (
       <InspectionTree
         inspection={inspection}
@@ -221,7 +221,7 @@ interface TaskInspectionProps {
 }
 
 const TaskInspection = ({ executorId, noDataLabel }: TaskInspectionProps) => {
-  const details = useExecutorDetails(executorId);
+  const details = useDetails(executorId);
 
   usePartInspection(executorId, 'task');
 

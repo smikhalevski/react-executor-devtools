@@ -114,7 +114,7 @@ listExecutor.resolve(
   Object.entries(executorMocks).map(([executorId, executor]) => ({
     executorId,
     documentId: DOCUMENT_ID,
-    term: getValuePreview(executor.key, 4).toLowerCase(),
+    searchableString: getValuePreview(executor.key, 4).toLowerCase(),
   }))
 );
 
@@ -130,7 +130,7 @@ const inspectOptions: InspectOptions = {
 
 const contentClient: ContentClient = {
   startInspection(executorId) {
-    inspectorExecutor.resolve({ executorId: executorId });
+    inspectorExecutor.resolve({ executorId });
 
     getPartInspectionExecutor(executorId, 'key').resolve(inspect(executorMocks[executorId].key, 0, inspectOptions));
     getPartInspectionExecutor(executorId, 'value').resolve(inspect(executorMocks[executorId].value, 0, inspectOptions));
@@ -156,9 +156,9 @@ const contentClient: ContentClient = {
 
   inspectChildren(executorId, part, path) {
     const inspectionExecutor = getPartInspectionExecutor(executorId, part);
-    const inspection = inspectionExecutor.get();
+    const inspection = inspectionExecutor.value;
 
-    if (inspection === null) {
+    if (inspection === undefined) {
       return;
     }
 
