@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { OverlayArrow, Tooltip as AriaTooltip } from 'react-aria-components';
+import { OverlayArrow, Tooltip as _Tooltip } from 'react-aria-components';
 import css from './Tooltip.module.css';
 
 interface TooltipProps {
@@ -7,7 +7,7 @@ interface TooltipProps {
 }
 
 export const Tooltip = ({ children }: TooltipProps) => (
-  <AriaTooltip className={css.Tooltip}>
+  <_Tooltip className={css.Tooltip}>
     {children}
     <OverlayArrow className={css.OverlayArrow}>
       <svg
@@ -18,5 +18,5 @@ export const Tooltip = ({ children }: TooltipProps) => (
         <path d="M0 0 L4 4 L8 0" />
       </svg>
     </OverlayArrow>
-  </AriaTooltip>
+  </_Tooltip>
 );

@@ -140,7 +140,7 @@ function receivePanelMessage(message: PanelMessage): void {
       if (child !== undefined) {
         window.__REACT_EXECUTOR_DEVTOOLS__.inspectedValue = child[INSPECTED_VALUE];
 
-        sendContentMessage({ type: 'open_sources_tab', url: window.location.href });
+        sendContentMessage({ type: 'open_sources_tab' });
       }
       break;
     }

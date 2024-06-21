@@ -12,10 +12,11 @@ import {
 } from './app/executors';
 import { ContentClient, ContentClientProvider } from './app/useContentClient';
 import { ContentMessage, ExecutorPart, PanelMessage } from './types';
+import { die } from './utils';
 
 chrome.runtime.onMessage.addListener((message, sender) => {
-  if (sender.documentId !== undefined && sender.tab?.id === chrome.devtools.inspectedWindow.tabId) {
-    receiveContentMessage(message, sender.documentId);
+  if (sender.tab?.id === chrome.devtools.inspectedWindow.tabId) {
+    receiveContentMessage(message, sender);
   }
 });
 
@@ -29,7 +30,7 @@ function sendMessage(message: PanelMessage): void {
   }
 }
 
-function receiveContentMessage(message: ContentMessage, documentId: string): void {
+function receiveContentMessage(message: ContentMessage, sender: chrome.runtime.MessageSender): void {
   switch (message.type) {
     case 'content_opened':
       sendMessage({ type: 'panel_opened' });
@@ -40,7 +41,7 @@ function receiveContentMessage(message: ContentMessage, documentId: string): voi
       const list = [];
 
       for (const item of listExecutor.get()) {
-        if (item.documentId !== documentId) {
+        if (item.documentId !== sender.documentId) {
           list.push(item);
         } else {
           executorManager.detach(getDetailsExecutor(item.executorId).key);
@@ -66,7 +67,7 @@ function receiveContentMessage(message: ContentMessage, documentId: string): voi
 
       list.push({
         executorId: message.executorId,
-        documentId,
+        documentId: sender.documentId || die("Sender doesn't have a documentId"),
         searchableString: message.details.keyPreview.toLowerCase(),
       });
 
@@ -121,9 +122,8 @@ function receiveContentMessage(message: ContentMessage, documentId: string): voi
         if (__REACT_EXECUTOR_DEVTOOLS__.inspectedValue !== undefined) {
           inspect(__REACT_EXECUTOR_DEVTOOLS__.inspectedValue);
           __REACT_EXECUTOR_DEVTOOLS__.inspectedValue = undefined;
-        }
-      `,
-        { frameURL: message.url }
+        }`,
+        { frameURL: sender.url }
       );
       break;
   }

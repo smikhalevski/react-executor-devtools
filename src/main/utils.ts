@@ -73,3 +73,7 @@ export function getExecutorStats(executor: Executor): ExecutorStats {
     hasTask: executor.task !== null,
   };
 }
+
+export function die(message?: string): never {
+  throw new Error(message);
+}

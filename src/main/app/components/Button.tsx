@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { Button as AriaButton } from 'react-aria-components';
+import { Button as _Button } from 'react-aria-components';
 import css from './Button.module.css';
 
 interface ButtonProps {
@@ -9,11 +9,11 @@ interface ButtonProps {
 }
 
 export const Button = (props: ButtonProps) => (
-  <AriaButton
+  <_Button
     className={css.Button}
     onPress={props.onPress}
     isDisabled={props.isDisabled}
   >
     {props.children}
-  </AriaButton>
+  </_Button>
 );

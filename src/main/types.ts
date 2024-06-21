@@ -98,4 +98,4 @@ export type ContentMessage =
   | { source?: string; type: 'executor_detached'; executorId: string }
   | { source?: string; type: 'executor_state_changed'; executorId: string; stats: ExecutorStats }
   | { source?: string; type: 'executor_patched'; executorId: string; patch: ExecutorPatch }
-  | { source?: string; type: 'open_sources_tab'; url: string };
+  | { source?: string; type: 'open_sources_tab' };
