@@ -23,6 +23,13 @@ export interface ContentClient {
   goToDefinition(executorId: string, part: ExecutorPart, path: number[]): void;
 
   /**
+   * Start the executor debugging.
+   *
+   * @param executorId The ID of the inspected executor.
+   */
+  debugExecutor(executorId: string): void;
+
+  /**
    * Retry the executor.
    *
    * @param executorId The ID of the executor.

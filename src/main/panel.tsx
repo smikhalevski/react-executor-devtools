@@ -140,6 +140,10 @@ const contentClient: ContentClient = {
     sendMessage({ type: 'go_to_part_definition', executorId, part, path });
   },
 
+  debugExecutor(executorId) {
+    sendMessage({ type: 'debug_executor', executorId });
+  },
+
   retryExecutor(executorId) {
     sendMessage({ type: 'retry_executor', executorId });
   },

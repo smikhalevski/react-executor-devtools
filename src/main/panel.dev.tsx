@@ -148,6 +148,8 @@ const contentClient: ContentClient = {
 
   goToDefinition(executorId, path, part) {},
 
+  debugExecutor(executorId) {},
+
   retryExecutor(executorId) {},
 
   invalidateExecutor(executorId) {},

@@ -1,14 +1,18 @@
 import React, { ReactNode } from 'react';
 import type { ExecutorPart, Location } from '../../types';
 import { useDetails, useInspector, usePartInspection } from '../executors';
+import { DebugIcon } from '../gen/icons/DebugIcon';
 import { WarningIcon } from '../gen/icons/WarningIcon';
 import { useContentClient } from '../useContentClient';
 import { Button } from './Button';
 import { FormattedRelativeDateTime } from './FormattedRelativeDateTime';
+import { IconButton } from './IconButton';
 import { InspectionTree } from './InspectionTree';
 import css from './InspectorView.module.css';
 import { Loading } from './Loading';
 import { StatsIndicator } from './StatsIndicator';
+import { Tooltip } from './Tooltip';
+import { TooltipTrigger } from 'react-aria-components';
 
 export const InspectorView = () => {
   const inspector = useInspector();
@@ -94,7 +98,19 @@ const StatsSection = ({ executorId }: StatsSectionProps) => {
   const { stats } = useDetails(executorId);
 
   return (
-    <Section title={'Status'}>
+    <Section
+      title={
+        <>
+          {'Status '}
+          <TooltipTrigger>
+            <IconButton onPress={() => contentClient.debugExecutor(executorId)}>
+              <DebugIcon />
+            </IconButton>
+            <Tooltip>{'Debug in console'}</Tooltip>
+          </TooltipTrigger>
+        </>
+      }
+    >
       <div className={css.StatusesBlock}>
         <StatsIndicator
           stats={stats}

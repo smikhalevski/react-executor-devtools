@@ -1,5 +1,5 @@
 import 'react';
-import type { ExecutorPlugin } from 'react-executor';
+import type { Executor, ExecutorPlugin } from 'react-executor';
 
 declare module 'react' {
   interface CSSProperties {
@@ -17,5 +17,10 @@ declare global {
        */
       inspectedValue?: unknown;
     };
+
+    /**
+     * The executor that is being debugged. Populated when `'debug_executor'` command is sent by the devtools panel.
+     */
+    $executor?: Executor;
   }
 }

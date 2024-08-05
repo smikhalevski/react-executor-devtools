@@ -86,7 +86,8 @@ export type PanelMessage =
   | { source?: string; type: 'invalidate_executor'; executorId: string }
   | { source?: string; type: 'abort_executor'; executorId: string }
   | { source?: string; type: 'inspect_children'; executorId: string; part: ExecutorPart; path: number[] }
-  | { source?: string; type: 'go_to_part_definition'; executorId: string; part: ExecutorPart; path: number[] };
+  | { source?: string; type: 'go_to_part_definition'; executorId: string; part: ExecutorPart; path: number[] }
+  | { source?: string; type: 'debug_executor'; executorId: string };
 
 /**
  * content, content_main -> panel

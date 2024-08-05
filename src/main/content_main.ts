@@ -145,6 +145,54 @@ function receivePanelMessage(message: PanelMessage): void {
       break;
     }
 
+    case 'debug_executor': {
+      const executorInfo = contentState.executorInfos.get(message.executorId);
+
+      if (executorInfo === undefined) {
+        break;
+      }
+
+      const executor = executorInfo.executor;
+
+      window.$executor = executor;
+
+      const labelStyle = 'display: block; padding-top: 8px; font-weight: bold';
+      const statusStyle =
+        'display: block; color: ' + (executor.settledAt === 0 ? '#aaa' : executor.isFulfilled ? 'green' : 'red');
+
+      console.log(
+        '%cKey\n%o\n' +
+          '%cStatus\n%c\u25cf%c %s\n' +
+          '%cValue\n%o\n' +
+          '%cReason\n%o\n' +
+          '%cTask\n%o\n' +
+          '%cPlugins\n%o\n' +
+          '%cAnnotations\n%o\n' +
+          '%cUse %c$executor%c to access the executor instance from the console.',
+        'font-weight: bold',
+        executor.key,
+        labelStyle,
+        statusStyle,
+        '',
+        executor.settledAt === 0 ? 'Unsettled' : executor.isFulfilled ? 'Fulfilled' : 'Rejected',
+        labelStyle,
+        executor.value,
+        labelStyle,
+        executor.reason,
+        labelStyle,
+        executor.task,
+        labelStyle,
+        executorInfo.plugins,
+        labelStyle,
+        executor.annotations,
+        // Hint
+        'display: block; padding-top: 16px; color: #aaa',
+        'display: inline-block; padding: 2px 6px; white-space: nowrap; border-radius: 4px; border: 1px solid #aaa; color: #aaa',
+        'color:#aaa'
+      );
+      break;
+    }
+
     case 'inspect_children': {
       if (contentState.inspectedExecutorId !== message.executorId || contentState.inspections === null) {
         break;
