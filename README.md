@@ -4,7 +4,7 @@ Devtools browser extension for [React Executor](https://github.com/smikhalevski/
 
 [Install the extension](https://chromewebstore.google.com/detail/react-executor-devtools/achlflelpafnlpepfpfhildkahbfhgjc)
 from the Chrome Web Store and try it live with
-[the example project](https://codesandbox.io/p/sandbox/react-executor-example-ltflgy?file=%2Fsrc%2FTodoListApp.tsx).
+[the example project](https://stackblitz.com/edit/react-executor-todo-app?file=README.md).
 
 <br/>
 
